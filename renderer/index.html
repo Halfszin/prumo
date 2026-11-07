@@ -1396,9 +1396,9 @@ function noteList(){const q=norm($('n-q').value).trim(),l=[...notes].sort(noteSo
   $('n-items').innerHTML=l.length?l.map((n,i)=>`${np&&i===0?'<li class="nsec">Fixadas</li>':''}${np&&i===np?'<li class="nsec">Outras notas</li>':''}<li><button data-note="${n.id}" aria-current="${n.id===noteId}"><b>${n.pin?PIN:''}${esc(n.title||'Sem título')}</b><small>${fmtRel(n.updated)}</small><span>${esc((n.text||'').slice(0,100))}</span></button></li>`).join(''):`<li class="none">${notes.length?'Nenhuma nota encontrada.':'Nenhuma nota ainda.'}</li>`}
 function renderNotes(){if(!curNote())noteId=([...notes].sort(noteSort)[0]||{}).id||null;noteList();hideImgBar();
   const n=curNote();$('n-ed').classList.toggle('off',!n);$('n-empty').hidden=!!n;if(!n){NB.dataset.id='';return}
-  if(NB.dataset.id!==n.id){NB.innerHTML=n.html||'<p><br></p>';NT.textContent=n.title||'';NB.dataset.id=n.id;lastR=null}
+  if(NB.dataset.id!==n.id){NB.innerHTML=n.html||'<p><br></p>';NT.textContent=n.title||'';NB.dataset.id=n.id;lastR=null;histReset()}
   pinUI(n);$('n-meta').textContent='Editada '+fmtRel(n.updated).toLowerCase()+' · criada em '+new Date(n.created).toLocaleDateString('pt-BR')}
-function saveCur(){const n=curNote();if(!n)return;n.title=NT.textContent.trim();n.html=NB.innerHTML;n.text=NB.innerText.replace(/\s+/g,' ').trim().slice(0,1000);n.updated=Date.now();svNotes();noteList();$('n-meta').textContent='Editada agora · criada em '+new Date(n.created).toLocaleDateString('pt-BR')}
+function saveCur(){const n=curNote();if(!n)return;n.title=NT.textContent.trim();n.html=NB.innerHTML;n.text=NB.innerText.replace(/\s+/g,' ').trim().slice(0,1000);n.updated=Date.now();svNotes();noteList();$('n-meta').textContent='Editada agora · criada em '+new Date(n.created).toLocaleDateString('pt-BR');histLater()}
 function newNote(){const n={id:nid(),title:'',html:'<p><br></p>',text:'',created:Date.now(),updated:Date.now()};notes.push(n);noteId=n.id;svNotes();if(page!=='notes')setPage('notes');else renderNotes();NT.focus()}
 const PIN='<svg class="pin" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-label="Fixada"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"/></svg>';
 const pinUI=n=>{$('n-pin').setAttribute('aria-pressed',!!n.pin);$('n-pin').title=n.pin?'Desafixar do topo':'Fixar no topo da lista';$('n-pin').setAttribute('aria-label',$('n-pin').title)};
@@ -1426,12 +1426,24 @@ function makeList(tag){const b=ensureBlock();if(!b)return;if(/^(UL|OL)$/.test(b.
 function splitBlock(b,cls){const s=getSelection();if(!s.rangeCount)return;const r=s.getRangeAt(0);r.deleteContents();const tail=document.createRange();tail.setStart(r.startContainer,r.startOffset);tail.setEnd(b,b.childNodes.length);
   const n=document.createElement(b.tagName);if(cls)n.className=cls;n.appendChild(tail.extractContents());[b,n].forEach(x=>{if(!x.textContent&&!x.querySelector('img'))x.innerHTML='<br>'});b.after(n);setCaret(n,0)}
 $('n-tool').onmousedown=e=>{if(e.target.closest('button:not(#n-del):not(#n-pin)'))e.preventDefault()};
-$('n-tool').onclick=e=>{const b=e.target.closest('button');if(!b||b.id==='n-del'||b.id==='n-pin')return;if(b.dataset.img!==undefined){$('n-file').click();return}
+$('n-tool').onclick=e=>{const b=e.target.closest('button');if(!b||b.id==='n-del'||b.id==='n-pin')return;histPush();if(b.dataset.img!==undefined){$('n-file').click();return}
   restoreR();const c=b.dataset.c;if(c==='insertUnorderedList'||c==='insertOrderedList')makeList(c==='insertUnorderedList'?'ul':'ol');else if(c)document.execCommand(c);else setBlock(b.dataset.b);saveCur()};
 document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&NB.contains(s.anchorNode))lastR=s.getRangeAt(0).cloneRange()});
 function restoreR(){NB.focus();if(lastR&&NB.contains(lastR.startContainer)){const s=getSelection();s.removeAllRanges();s.addRange(lastR)}}
 const MD=[[/^#$/,'h1'],[/^##$/,'h2'],[/^###$/,'h3'],[/^>$/,'blockquote'],[/^\[ ?\]$/,'todo'],[/^[-*]$/,'ul'],[/^1[.)]$/,'ol'],[/^```$/,'pre']];
-NB.addEventListener('keydown',e=>{const s=getSelection();if(e.isComposing)return;
+// desfazer/refazer próprio das notas: os atalhos de bloco trocam o HTML direto e o desfazer do navegador não acompanha
+let nh={u:[],r:[]},nhT=null;
+const nSnap=()=>({h:NB.innerHTML,t:NT.textContent,o:NB.contains(getSelection().anchorNode)?caretOff(NB):null});
+function histReset(){clearTimeout(nhT);nhT=null;nh={u:[nSnap()],r:[]}}
+function histPush(){clearTimeout(nhT);nhT=null;const s=nSnap(),l=nh.u[nh.u.length-1];if(l&&l.h===s.h&&l.t===s.t){if(s.o!=null)l.o=s.o;return}nh.u.push(s);if(nh.u.length>300)nh.u.shift();nh.r=[]}
+const histLater=()=>{clearTimeout(nhT);nhT=setTimeout(histPush,600)};
+function histGo(back){histPush();if(back){if(nh.u.length<2)return;nh.r.push(nh.u.pop())}else{if(!nh.r.length)return;nh.u.push(nh.r.pop())}
+  const s=nh.u[nh.u.length-1];NB.innerHTML=s.h;NT.textContent=s.t;NB.focus();setCaret(NB,s.o??NB.textContent.length);hideImgBar();
+  const n=curNote();if(n){n.title=NT.textContent.trim();n.html=NB.innerHTML;n.text=NB.innerText.replace(/\s+/g,' ').trim().slice(0,1000);n.updated=Date.now();svNotes();noteList()}}
+const undoKeys=e=>{const c=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();if(c&&k==='z'){e.preventDefault();histGo(!e.shiftKey);return true}if(c&&k==='y'){e.preventDefault();histGo(false);return true}return false};
+[NB,NT].forEach(el=>{el.addEventListener('keydown',e=>{if(undoKeys(e))e.stopImmediatePropagation()},true);
+  el.addEventListener('beforeinput',e=>{if(e.inputType==='historyUndo'||e.inputType==='historyRedo'){e.preventDefault();histGo(e.inputType==='historyUndo')}})});
+NB.addEventListener('keydown',e=>{const s=getSelection();if(e.isComposing)return;if(e.key==='Enter')histPush();
   if(e.key===' '&&s.isCollapsed&&s.anchorNode&&s.anchorNode.nodeType===3){const b=ensureBlock();if(!b||!/^(P|DIV|H[1-3])$/.test(b.tagName))return;
     const pre=b.textContent.slice(0,caretOff(b));const m=MD.find(([r])=>r.test(pre));if(!m)return;e.preventDefault();
     const n=s.anchorNode;n.textContent=n.textContent.slice(s.anchorOffset);if(!n.textContent)n.remove();if(!b.textContent&&!b.querySelector('img,br'))b.innerHTML='<br>';setCaret(b,0);
@@ -1443,13 +1455,13 @@ NB.addEventListener('keydown',e=>{const s=getSelection();if(e.isComposing)return
     else if(b.tagName==='PRE'){e.preventDefault();if(b.textContent.endsWith('\n\n')&&caretOff(b)>=b.textContent.length){b.lastChild.textContent=b.lastChild.textContent.replace(/\n+$/,'');const p=document.createElement('p');p.innerHTML='<br>';b.after(p);setCaret(p,0)}else document.execCommand('insertText',false,'\n');saveCur()}}
   else if(e.key==='Backspace'&&s.isCollapsed){const b=blockOf();if(b&&b.nodeType===1&&caretOff(b)===0&&(b.classList.contains('todo')||/^(H[1-3]|BLOCKQUOTE|PRE)$/.test(b.tagName))){e.preventDefault();retag(b,'p','');saveCur()}}});
 NB.addEventListener('click',e=>{const im=e.target.closest('img');if(im){showImgBar(im);return}hideImgBar();
-  const t=e.target.closest('.todo');if(t&&e.clientX-t.getBoundingClientRect().left<26){t.classList.toggle('done');saveCur()}});
+  const t=e.target.closest('.todo');if(t&&e.clientX-t.getBoundingClientRect().left<26){histPush();t.classList.toggle('done');saveCur()}});
 // imagens: reduz para no máximo 1600 px e guarda no computador (no app) ou dentro da nota (prévia web)
 const readURL=f=>new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=j;fr.readAsDataURL(f)});
 async function imgData(file){const d=await readURL(file);if(!/^data:image\/(png|jpeg|gif|webp);/.test(d))return null;const im=new Image();im.src=d;await im.decode();
   const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight));if(file.type==='image/gif'||(k===1&&file.size<1.5e6))return d;
   const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL(file.type==='image/png'?'image/png':'image/jpeg',.88)}
-async function insertImgs(list){const fl=[...list].filter(f=>/^image\/(png|jpeg|gif|webp)$/.test(f.type));if(!fl.length){toast('Use imagens PNG, JPG, GIF ou WEBP');return}
+async function insertImgs(list){histPush();const fl=[...list].filter(f=>/^image\/(png|jpeg|gif|webp)$/.test(f.type));if(!fl.length){toast('Use imagens PNG, JPG, GIF ou WEBP');return}
   for(const f of fl){let src=await imgData(f).catch(()=>null);if(!src)continue;if(window.api)src=(await api.noteImg(src))||src;restoreR();document.execCommand('insertHTML',false,`<p><img src="${esc(src)}" alt=""></p><p><br></p>`)}saveCur()}
 $('n-file').onchange=()=>{insertImgs($('n-file').files);$('n-file').value=''};
 NB.addEventListener('paste',e=>{const cd=e.clipboardData,im=[...cd.files];e.preventDefault();if(im.length){insertImgs(im);return}document.execCommand('insertText',false,cd.getData('text/plain'))});
@@ -1460,7 +1472,7 @@ NB.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();document.b
 function showImgBar(im){selImg=im;const b=$('imgbar'),r=im.getBoundingClientRect();b.hidden=false;b.style.left=Math.max(8,r.left)+'px';b.style.top=Math.max(8,r.top-46)+'px'}
 function hideImgBar(){$('imgbar').hidden=true;selImg=null}
 $('imgbar').onmousedown=e=>e.preventDefault();
-$('imgbar').onclick=e=>{const w=e.target.dataset.w;if(!w||!selImg)return;if(w==='del'){const p=selImg.parentNode;selImg.remove();if(p!==NB&&!p.textContent.trim()&&!p.querySelector('img'))p.remove()}else selImg.style.width=w==='100%'?'':w;hideImgBar();saveCur()};
+$('imgbar').onclick=e=>{const w=e.target.dataset.w;if(!w||!selImg)return;histPush();if(w==='del'){const p=selImg.parentNode;selImg.remove();if(p!==NB&&!p.textContent.trim()&&!p.querySelector('img'))p.remove()}else selImg.style.width=w==='100%'?'':w;hideImgBar();saveCur()};
 addEventListener('scroll',hideImgBar,true);addEventListener('resize',hideImgBar);
 
 (async()=>{let st={};

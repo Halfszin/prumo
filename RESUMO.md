@@ -5,11 +5,13 @@ Use este arquivo para continuar em uma conversa nova. Envie também o `prumo.zip
 ## O que é
 Organizador de arquivos open source (MIT) para Windows, em Electron. Lê uma pasta (ex.: Downloads), mostra um **plano** (arquivo -> pasta) e só move depois de confirmar. Tem **Desfazer**, regras editáveis, pré-visualização e quadro kanban. Nome sempre "Prumo", com P maiúsculo e na fonte Pacifico; o restante em Inter. Frase: "Seus arquivos, no prumo."
 
-## Versão atual: 0.11.2
+## Versão atual: 0.11.3
 **Regra do usuário: sempre entregar juntos o `prumo.zip` e o instalador `.exe` (com `latest.yml` e `.blockmap`).** O .exe tem ~100 MB e o app do usuário não baixa arquivo desse tamanho: entregar também dividido em partes de 30 MB (`split -b 30m -d -a 1`, renomeadas `.bin`) com um `juntar.bat` (`copy /b parte0+parte1+... Prumo-Setup-X.exe`).
 **Usuário pediu: trabalhar só no app; não atualizar a landing page por enquanto.**
 
 **GitHub: https://github.com/Halfszin/prumo (público).** Esta sessão do Claude não pode criar releases nem enviar tags, então a publicação é pelo GitHub Actions (`.github/workflows/instalador.yml`): roda em `windows-latest`, faz `npm ci`, `node test-extras.js` e `electron-builder --win --publish always`, criando a release `vX.Y.Z` com o .exe, `latest.yml` e `.blockmap`. Para publicar uma versão nova: subir a versão no `package.json`, fazer push na `main` e disparar o workflow (`gh api -X POST repos/Halfszin/prumo/actions/workflows/instalador.yml/dispatches -f ref=main`) ou o botão "Run workflow" no GitHub. Link do instalador: https://github.com/Halfszin/prumo/releases/latest. A atualização automática usa por padrão `https://github.com/Halfszin/prumo/releases/latest/download` (`UPDATE_URL` no `main.js`).
+
+Novidades da 0.11.3: Ctrl+Z / Ctrl+Y (e Ctrl+Shift+Z) nas Notas com pilha própria (`nh`, `histPush`, `histGo`): agrupa a digitação (600 ms) e cada Enter, botão da barra, imagem e tarefa marcada vira um passo; zera ao trocar de nota.
 
 Novidades da 0.11.2: atualização automática mostra o andamento. Botão no alto vira barra "Baixando X… N%" e depois "Atualizar para X" (com aviso); erros aparecem em Configurações > Sobre e num aviso; registro em `%APPDATA%\Prumo\update.log` (`updater()`, `updInfo`, eventos `update-status`). Corrigido: "Verificar agora" disparava duas verificações e dois downloads ao mesmo tempo.
 
