@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('api', {
   onBgChanged: (cb) => ipcRenderer.on('bg-changed', () => cb()),
   onUpdate: (cb) => ipcRenderer.on('update', (_e, m) => cb(m)),
   updateState: () => call('update:state'),
+  updateStatus: () => call('update:status'),
+  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_e, m) => cb(m)),
   installUpdate: () => call('update:install'),
   checkUpdate: () => call('update:check'),
   copy: (t) => call('copy', t),

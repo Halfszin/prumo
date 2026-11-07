@@ -671,6 +671,8 @@ button.mo{border:0;background:none;padding:4px 0 0;font:inherit;color:inherit;cu
 button.mo:disabled{cursor:default}
 button.mo:not(:disabled):hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 button.mo:not(:disabled):hover i{filter:brightness(1.25)}
+
+#upd.dl{background:linear-gradient(90deg,var(--accent) var(--pct,0%),color-mix(in srgb,var(--accent) 35%,var(--card)) var(--pct,0%));opacity:1;cursor:default;font-variant-numeric:tabular-nums}
 body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}
 </style>
 </head>
@@ -1200,8 +1202,17 @@ async function refresh(quiet){if(!window.api||!root){if(!quiet)toast('Abra uma p
     const f=sp&&files.find(x=>x.path===sp);if(f)select(f.id);if(!quiet)toast('Lista atualizada')}catch(e){if(!quiet)toast('Não foi possível ler a pasta')}}
 $('refresh').onclick=()=>refresh(false);
 addEventListener('focus',()=>{if(Date.now()-lastRef>3000)refresh(true)});
-const showUpd=m=>{$('upd').hidden=false;$('upd').textContent='Atualizar para '+m.version;$('upd').title='Reinicia o Prumo e instala a versão '+m.version};
-$('upd').onclick=()=>window.api&&api.installUpdate();
+const showUpd=m=>{$('upd').hidden=false;$('upd').disabled=false;$('upd').classList.remove('dl');$('upd').textContent='Atualizar para '+m.version;$('upd').title='Reinicia o Prumo e instala a versão '+m.version};
+$('upd').onclick=()=>{if(!$('upd').disabled&&window.api)api.installUpdate()};
+// progresso da atualização: botão no alto da tela e texto em Configurações > Sobre
+let updWas='';
+function updUI(p){if(!p)return;const b=$('upd'),st=$('u-st');
+  if(p.phase==='downloading'){const t=`Baixando ${p.version||'atualização'}… ${p.percent||0}%`;b.hidden=false;b.disabled=true;b.classList.add('dl');b.style.setProperty('--pct',(p.percent||0)+'%');b.textContent=t;b.title='A versão nova está sendo baixada. Você pode continuar usando o Prumo.';st.textContent=t+(p.total?` (${fmt(p.done/1048576)} de ${fmt(p.total/1048576)})`:'')}
+  else if(p.phase==='ready'){showUpd(p);st.textContent=`A versão ${p.version} está pronta. Clique em "Atualizar para ${p.version}" no alto da tela para reiniciar e instalar.`;if(updWas!=='ready')toast('Versão '+p.version+' pronta. Clique em Atualizar, no alto da tela')}
+  else if(p.phase==='error'){if(b.classList.contains('dl'))b.hidden=true;st.textContent='Não foi possível baixar a atualização: '+p.message+'. Tente de novo em Verificar agora.';if(updWas!=='error')toast('Não foi possível baixar a atualização')}
+  else if(p.phase==='checking')st.textContent='Procurando versão nova…';
+  else if(p.phase==='latest')st.textContent='Você já está na versão mais recente.';
+  updWas=p.phase}
 $('bg-seg').onclick=async()=>{if(!window.api){toast('Disponível no programa instalado');return}bg.on=!bg.on;
   if(bg.on&&!rules.some(r=>r.auto)&&await askC('Organizar quais arquivos?','Nenhuma regra está marcada para organizar sozinha. Quer marcar todas? Você pode desmarcar uma por uma depois.','Marcar todas'))setAllAuto(true);
   save('bg',bg);syncSettings();if(bg.on)toast('Organização automática ligada. Os arquivos novos que chegarem em '+(bg.folder||downloadsPath||'Downloads')+' serão organizados')};
@@ -1455,7 +1466,7 @@ addEventListener('scroll',hideImgBar,true);addEventListener('resize',hideImgBar)
 (async()=>{let st={};
   if(window.api){st=await api.getState();files=[];setUndo(await api.undoCount())}
   else try{st.rules=JSON.parse(localStorage.getItem('arrumei-rules'));st.board=JSON.parse(localStorage.getItem('arrumei-board'));st.prefs=JSON.parse(localStorage.getItem('arrumei-prefs'));st.events=JSON.parse(localStorage.getItem('arrumei-events'));st.colors=JSON.parse(localStorage.getItem('arrumei-colors'));for(const k of ['meta','tagdefs','notes','recur'])st[k]=JSON.parse(localStorage.getItem('arrumei-'+k))}catch(e){}
-  colors={...(st.colors||{})};setRules(st.rules&&st.rules.length?st.rules:JSON.parse(JSON.stringify(DEFAULT_RULES)));prefs={...(st.prefs||{})};bg={...(st.bg||{})};events={...(st.events||{})};upd={...(st.update||{})};meta={...(st.meta||{})};tagdefs=st.tagdefs||DEF_TAGS.map(x=>({...x}));notes=st.notes||[welcomeNote()];recur=st.recur||[];qct=!!prefs.qct;$('q-ct').setAttribute('aria-pressed',qct);applyPrefs();if(window.api){downloadsPath=(await api.paths()).downloads;api.onFilesChanged(()=>refresh(true));api.onBgChanged(async()=>{bg={...((await api.getState()).bg||{})};syncSettings()});api.onUpdate(showUpd);api.onOpenCal(k=>{setPage('cal');calGo(k)});api.updateState().then(m=>{if(m)showUpd(m)})}if(st.board)board=st.board;if(st.prefs&&st.prefs.mode)mode=st.prefs.mode;else if(window.api)mode='details';destBase=(st.prefs&&st.prefs.dest)||'';
+  colors={...(st.colors||{})};setRules(st.rules&&st.rules.length?st.rules:JSON.parse(JSON.stringify(DEFAULT_RULES)));prefs={...(st.prefs||{})};bg={...(st.bg||{})};events={...(st.events||{})};upd={...(st.update||{})};meta={...(st.meta||{})};tagdefs=st.tagdefs||DEF_TAGS.map(x=>({...x}));notes=st.notes||[welcomeNote()];recur=st.recur||[];qct=!!prefs.qct;$('q-ct').setAttribute('aria-pressed',qct);applyPrefs();if(window.api){downloadsPath=(await api.paths()).downloads;api.onFilesChanged(()=>refresh(true));api.onBgChanged(async()=>{bg={...((await api.getState()).bg||{})};syncSettings()});api.onUpdate(showUpd);api.onUpdateStatus(updUI);api.updateStatus().then(updUI);api.onOpenCal(k=>{setPage('cal');calGo(k)});api.updateState().then(m=>{if(m)showUpd(m)})}if(st.board)board=st.board;if(st.prefs&&st.prefs.mode)mode=st.prefs.mode;else if(window.api)mode='details';destBase=(st.prefs&&st.prefs.dest)||'';
   if(window.api&&st.root){try{loadFiles(await api.scan(st.root))}catch(e){}}
   setMode(mode);if(window.api&&!prefs.welcomed)showWelcome()})();
 </script>

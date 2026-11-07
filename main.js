@@ -264,32 +264,46 @@ function applyBg() {
 // ---- atualização automática (endereço definido nas configurações) ----
 // sem endereço nas configurações, usa as versões publicadas no GitHub
 const UPDATE_URL = 'https://github.com/Halfszin/prumo/releases/latest/download';
-function setupUpdater() {
+// estado do download mostrado na tela (progresso, pronto, erro); registro em %APPDATA%\Prumo\update.log
+let updInfo = { phase: 'idle' }, lastProg = 0;
+const updSend = (p) => { updInfo = p; send('update-status', p); };
+const updLog = (lvl) => (m) => { try { fsSync.appendFileSync(path.join(app.getPath('userData'), 'update.log'), `${new Date().toISOString()} ${lvl} ${m}\n`); } catch {} };
+function updater() {
   const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
-  if (!app.isPackaged || !u.url) return;
-  try {
-    const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
-    if (!updaterOn) {
-      updaterOn = true;
-      autoUpdater.on('update-downloaded', (i) => { readyUpdate = { version: i.version }; send('update', readyUpdate); });
-      setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 3600e3);
-    }
-    autoUpdater.checkForUpdates().catch(() => {});
-  } catch {}
+  const { autoUpdater } = require('electron-updater');
+  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
+  if (!updaterOn) {
+    updaterOn = true;
+    autoUpdater.logger = { info: updLog('INFO'), warn: updLog('WARN'), error: updLog('ERRO'), debug: () => {} };
+    autoUpdater.on('checking-for-update', () => updSend({ phase: 'checking' }));
+    autoUpdater.on('update-not-available', () => updSend({ phase: 'latest' }));
+    autoUpdater.on('update-available', (i) => updSend({ phase: 'downloading', version: i.version, percent: 0 }));
+    autoUpdater.on('download-progress', (p) => {
+      if (Date.now() - lastProg < 400) return; lastProg = Date.now();
+      updSend({ phase: 'downloading', version: updInfo.version, percent: Math.floor(p.percent), done: p.transferred, total: p.total });
+    });
+    autoUpdater.on('update-downloaded', (i) => { readyUpdate = { version: i.version }; updSend({ phase: 'ready', version: i.version }); send('update', readyUpdate); });
+    autoUpdater.on('error', (e) => updSend({ phase: 'error', message: String((e && e.message) || e).split('\n')[0].slice(0, 200) }));
+    setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 3600e3);
+  }
+  return autoUpdater;
+}
+function setupUpdater() {
+  if (!app.isPackaged) return;
+  try { updater().checkForUpdates().catch(() => {}); } catch {}
 }
 ipcMain.handle('update:state', () => readyUpdate);
+ipcMain.handle('update:status', () => updInfo);
 ipcMain.handle('update:install', () => { try { require('electron-updater').autoUpdater.quitAndInstall(); } catch {} });
 ipcMain.handle('update:check', async () => {
-  const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
-  if (!u.url) return 'Informe o endereço das atualizações.';
+  if (updInfo.phase === 'downloading') return `Baixando a versão ${updInfo.version}… ${updInfo.percent || 0}%`;
+  if (readyUpdate) return `A versão ${readyUpdate.version} está pronta. Clique em "Atualizar para ${readyUpdate.version}" no alto da tela.`;
   try {
-    setupUpdater();
-    const r = await require('electron-updater').autoUpdater.checkForUpdates();
+    const r = await updater().checkForUpdates();
     const v = r && r.updateInfo && r.updateInfo.version;
-    return v && v !== app.getVersion() ? `Versão ${v} encontrada. Baixando em segundo plano.` : 'Você já está na versão mais recente.';
+    return v && v !== app.getVersion() ? `Versão ${v} encontrada. Baixando… o progresso aparece no alto da tela.` : 'Você já está na versão mais recente.';
   } catch (e) { return 'Não foi possível verificar: ' + e.message; }
 });
 
