@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Tray, Notification, nativeImage } = require('electron');
 const { moveOne } = require('./fsops');
+const { readNfe, hashFile, searchContent } = require('./extras');
+const crypto = require('crypto');
 const { createWatcher } = require('./background');
 const path = require('path');
 const fs = require('fs/promises');
@@ -8,7 +10,7 @@ const fsSync = require('fs');
 if (!app.requestSingleInstanceLock()) app.quit();
 app.setAppUserModelId('org.prumo.app');
 
-// ---- configuração salva em %APPDATA%\Arrumei\arrumei.json ----
+// ---- configuração salva em %APPDATA%\Prumo\prumo.json ----
 const storeFile = () => path.join(app.getPath('userData'), 'prumo.json');
 let state = {};
 const oldStore = () => path.join(app.getPath('appData'), 'Arrumei', 'arrumei.json'); // versões antigas
@@ -16,6 +18,8 @@ const loadState = () => {
   for (const f of [storeFile(), oldStore()]) { try { state = JSON.parse(fsSync.readFileSync(f, 'utf8')); return; } catch {} }
   state = {};
 };
+// entradas do histórico de versões antigas não têm id
+const fixIds = () => (state.history || []).forEach((e) => { if (!e.id) e.id = crypto.randomUUID(); });
 const persist = () => { try { fsSync.mkdirSync(path.dirname(storeFile()), { recursive: true }); fsSync.writeFileSync(storeFile(), JSON.stringify(state, null, 1)); } catch {} };
 
 // ---- nomes seguros para o Windows ----
@@ -38,7 +42,7 @@ async function walk(dir, root, out, depth) {
     else if (e.isFile()) {
       try {
         const st = await fs.stat(p);
-        out.push({ name: e.name, path: p, size: st.size, mtime: st.mtimeMs, rel: path.relative(root, dir).split(path.sep).join('/') });
+        out.push({ name: e.name, path: p, size: st.size, mtime: st.mtimeMs, atime: st.atimeMs, rel: path.relative(root, dir).split(path.sep).join('/') });
       } catch {}
     }
   }
@@ -47,7 +51,7 @@ async function scan(root) { const files = []; await walk(root, root, files, 0); 
 
 // ---- mover sem nunca sobrescrever ----
 ipcMain.handle('state:get', () => state);
-ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors'].includes(k)) { state[k] = v; persist(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
+ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors', 'meta', 'tagdefs', 'notes', 'recur'].includes(k)) { state[k] = v; persist(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
 // Após diálogos nativos o Windows pode deixar os campos de texto sem foco; devolve o foco à janela
 const refocus = () => { if (mainWin && !mainWin.isDestroyed()) { mainWin.focus(); mainWin.webContents.focus(); } };
 ipcMain.handle('pick-folder', async () => {
@@ -58,34 +62,46 @@ ipcMain.handle('pick-folder', async () => {
   return scan(state.root);
 });
 ipcMain.handle('scan', (_e, root) => scan(root));
-ipcMain.handle('apply', async (_e, { root, dest, ops }) => {
+// favoritos e etiquetas ficam por caminho; acompanham o arquivo quando ele muda de lugar
+const remapMeta = (from, to) => { const m = state.meta; if (m && m[from]) { m[to] = m[from]; delete m[from]; } };
+const HMAX = 200;
+const record = (items, extra) => { state.history = [...(state.history || []), { id: crypto.randomUUID(), time: Date.now(), items, ...extra }].slice(-HMAX); };
+ipcMain.handle('apply', async (_e, { root, dest, ops, kind }) => {
   const res = [], done = [];
   for (const o of ops) {
     try {
       const to = await moveOne(dest || root || path.dirname(o.from), o);
       res.push({ from: o.from, to });
-      if (to !== o.from) done.push({ from: o.from, to });
+      if (to !== o.from) { done.push({ from: o.from, to }); remapMeta(o.from, to); }
     } catch (err) { res.push({ from: o.from, error: friendly(err) }); }
   }
-  if (done.length) { state.history = [...(state.history || []), { time: Date.now(), items: done }].slice(-20); persist(); }
+  if (done.length) record(done, { kind: kind || 'org' });
+  persist();
   return { res, undo: (state.history || []).length };
 });
-ipcMain.handle('undo', async () => {
-  const h = state.history || [], last = h.pop();
-  if (!last) return { ok: 0, fail: 0, undo: 0 };
-  let ok = 0, fail = 0;
-  for (const { from, to } of [...last.items].reverse()) {
+// desfaz itens de uma entrada do histórico (todos, ou só os índices pedidos)
+async function undoEntry(id, idx) {
+  const h = state.history || [], e = id == null ? h[h.length - 1] : h.find((x) => x.id === id);
+  if (!e) return { ok: 0, fail: 0 };
+  const pick = new Set(idx && idx.length ? idx : e.items.map((_, i) => i));
+  let ok = 0, fail = 0; const keep = [];
+  for (let i = e.items.length - 1; i >= 0; i--) {
+    const { from, to } = e.items[i];
+    if (!pick.has(i)) { keep.unshift(e.items[i]); continue; }
     try {
-      const taken = await fs.access(from).then(() => true, () => false);
-      if (taken) throw new Error('ocupado');
+      if (await fs.access(from).then(() => true, () => false)) throw new Error('ocupado');
       await fs.mkdir(path.dirname(from), { recursive: true });
-      await fs.rename(to, from); ok++;
+      await fs.rename(to, from); ok++; remapMeta(to, from);
       await fs.rmdir(path.dirname(to)).catch(() => {}); // remove pasta vazia criada pela organização
-    } catch { fail++; }
+    } catch { fail++; keep.unshift(e.items[i]); }
   }
-  state.history = h; persist();
-  return { ok, fail, undo: h.length };
-});
+  e.items = keep;
+  state.history = h.filter((x) => x.items.length); persist();
+  return { ok, fail };
+}
+ipcMain.handle('undo', async () => ({ ...(await undoEntry(null)), undo: (state.history || []).length }));
+ipcMain.handle('undo-items', async (_e, id, idx) => ({ ...(await undoEntry(id, idx)), undo: (state.history || []).length }));
+ipcMain.handle('history', () => [...(state.history || [])].reverse().map((e) => ({ id: e.id, time: e.time, kind: e.kind || (e.auto ? 'auto' : 'org'), items: e.items.map((x) => ({ name: path.basename(x.to), from: x.from, to: x.to })) })));
 ipcMain.handle('undo-info', () => {
   const h = state.history || [], l = h[h.length - 1];
   if (!l) return null;
@@ -134,12 +150,86 @@ ipcMain.handle('trash', async (_e, paths) => {
       if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('fora da pasta');
       if (!(await fs.lstat(abs)).isFile()) throw new Error('não é arquivo');
       await shell.trashItem(abs);
+      if (state.meta) delete state.meta[abs];
       out.done.push(p);
     } catch { out.failed.push(p); }
   }
+  persist();
   return out;
 });
+// NF-e, duplicados e busca no conteúdo (extras.js); só arquivos dentro da pasta aberta
+const insideRoot = (p) => { if (!state.root) return false; const r = path.relative(path.resolve(state.root), path.resolve(String(p))); return !!r && !r.startsWith('..') && !path.isAbsolute(r); };
+ipcMain.handle('nfe', async (_e, paths) => {
+  const out = [];
+  for (const p of (paths || []).filter(insideRoot)) { try { const n = await readNfe(p); if (n) out.push({ path: p, ...n }); } catch {} }
+  return out;
+});
+ipcMain.handle('hash', async (_e, paths) => {
+  const out = {};
+  for (const p of (paths || []).filter(insideRoot)) { try { out[p] = await hashFile(p); } catch {} }
+  return out;
+});
+ipcMain.handle('search', (_e, q, paths) => searchContent(q, (paths || []).filter(insideRoot)));
+// regras em arquivo, para levar a outro computador
+const cleanRules = (r) => (Array.isArray(r) ? r : []).filter((x) => x && typeof x.folder === 'string' && x.folder.trim()).slice(0, 200)
+  .map((x) => ({ folder: x.folder.trim().slice(0, 200), kw: String(x.kw || '').slice(0, 500), ext: String(x.ext || '').slice(0, 500), auto: !!x.auto }));
+ipcMain.handle('rules-export', async (_e, rules) => {
+  const r = await dialog.showSaveDialog({ defaultPath: path.join(app.getPath('documents'), 'prumo-regras.json'), filters: [{ name: 'Regras do Prumo', extensions: ['json'] }] });
+  refocus();
+  if (r.canceled || !r.filePath) return false;
+  await fs.writeFile(r.filePath, JSON.stringify({ app: 'Prumo', version: app.getVersion(), rules: cleanRules(rules) }, null, 2));
+  return r.filePath;
+});
+ipcMain.handle('rules-import', async () => {
+  const r = await dialog.showOpenDialog({ properties: ['openFile'], filters: [{ name: 'Regras do Prumo', extensions: ['json'] }] });
+  refocus();
+  if (r.canceled) return null;
+  try { const j = JSON.parse(await fs.readFile(r.filePaths[0], 'utf8')); const rules = cleanRules(Array.isArray(j) ? j : j.rules); return rules.length ? rules : { error: 'O arquivo não tem regras.' }; }
+  catch { return { error: 'Arquivo inválido.' }; }
+});
+// imagens das notas ficam em %APPDATA%\Prumo\notas
+// shortcut: imagens apagadas da nota continuam no disco; limpar órfãs quando a pasta crescer
+ipcMain.handle('note-img', async (_e, dataUrl) => {
+  const m = /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl));
+  if (!m) return null;
+  const dir = path.join(app.getPath('userData'), 'notas');
+  await fs.mkdir(dir, { recursive: true });
+  const f = path.join(dir, crypto.randomUUID() + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]));
+  await fs.writeFile(f, Buffer.from(m[2], 'base64'));
+  return 'file:///' + f.split(path.sep).join('/');
+});
 
+// ---- avisos do Windows na hora dos lembretes ----
+const pad2 = (n) => String(n).padStart(2, '0');
+const dkey = (d) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+// mesma regra de repetição do renderer (recurs)
+function recurs(r, d) {
+  if (r.start && dkey(d) < r.start) return false;
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  if (r.kind === 'daily') return true;
+  if (r.kind === 'weekly') return d.getDay() === r.wd;
+  if (r.kind === 'monthly') return d.getDate() === Math.min(r.day, last);
+  if (r.kind === 'yearly') return d.getMonth() === r.m && d.getDate() === Math.min(r.day, last);
+  return false;
+}
+function checkReminders() {
+  const now = new Date(), k = dkey(now), hm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+  const due = [
+    ...((state.events || {})[k] || []).filter((e) => e.time && !e.done),
+    ...(state.recur || []).filter((r) => r.time && recurs(r, now) && !(r.done || []).includes(k))
+  ].filter((e) => e.time <= hm);
+  const sent = state.notified || {};
+  let ch = false;
+  for (const e of due) {
+    const key = k + '|' + e.id;
+    if (sent[key]) continue;
+    sent[key] = 1; ch = true;
+    const n = new Notification({ title: 'Lembrete do Prumo', body: `${e.time} · ${e.t}` });
+    n.on('click', () => { showWindow(); send('open-cal', k); });
+    n.show();
+  }
+  if (ch) { const old = dkey(new Date(Date.now() - 3 * 864e5)); for (const x of Object.keys(sent)) if (x.slice(0, 10) < old) delete sent[x]; state.notified = sent; persist(); }
+}
 
 // ---- segundo plano: bandeja + organização automática ----
 let mainWin = null, tray = null, readyUpdate = null, updaterOn = false;
@@ -149,7 +239,7 @@ const watcher = createWatcher({
   getConfig: () => ({ on: !!bgc().on, folder: bgc().folder || app.getPath('downloads'), rules: state.rules || [], prefs: state.prefs || {} }),
   moveOne,
   onMoved: (moved, root) => {
-    state.history = [...(state.history || []), { time: Date.now(), auto: true, items: moved }].slice(-20); persist();
+    moved.forEach((x) => remapMeta(x.from, x.to)); record(moved, { auto: true, kind: 'auto' }); persist();
     new Notification({ title: 'Prumo', body: `${moved.length} ${moved.length === 1 ? 'arquivo organizado' : 'arquivos organizados'} em ${path.basename(root)}. Abra o Prumo para desfazer.` }).show();
     send('files-changed');
   }
@@ -215,9 +305,10 @@ function createWindow() {
   w.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 app.whenReady().then(() => {
-  loadState();
+  loadState(); fixIds();
   Menu.setApplicationMenu(null);
   applyBg(); setupUpdater();
+  setInterval(checkReminders, 20e3); setTimeout(checkReminders, 3000);
   if (!(process.argv.includes('--hidden') && bgc().on)) createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });

@@ -1,6 +1,6 @@
 {
   "name": "prumo",
-  "version": "0.9.3",
+  "version": "0.11.0",
   "description": "Prumo: organizador de arquivos open source para Windows",
   "author": "Arrumei contributors",
   "main": "main.js",
@@ -21,6 +21,7 @@
       "preload.js",
       "fsops.js",
       "background.js",
+      "extras.js",
       "renderer/**",
       "build/icon.png"
     ],

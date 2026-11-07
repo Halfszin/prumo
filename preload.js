@@ -22,5 +22,14 @@ contextBridge.exposeInMainWorld('api', {
   open: (p) => call('open', p),
   reveal: (p) => call('reveal', p),
   trash: (paths) => call('trash', paths),
+  undoItems: (id, idx) => call('undo-items', id, idx),
+  history: () => call('history'),
+  nfe: (paths) => call('nfe', paths),
+  hash: (paths) => call('hash', paths),
+  search: (q, paths) => call('search', q, paths),
+  exportRules: (rules) => call('rules-export', rules),
+  importRules: () => call('rules-import'),
+  noteImg: (dataUrl) => call('note-img', dataUrl),
+  onOpenCal: (cb) => ipcRenderer.on('open-cal', (_e, k) => cb(k)),
   pathOf: (file) => webUtils.getPathForFile(file)
 });
