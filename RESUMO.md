@@ -5,11 +5,13 @@ Use este arquivo para continuar em uma conversa nova. Envie também o `prumo.zip
 ## O que é
 Organizador de arquivos open source (MIT) para Windows, em Electron. Lê uma pasta (ex.: Downloads), mostra um **plano** (arquivo -> pasta) e só move depois de confirmar. Tem **Desfazer**, regras editáveis, pré-visualização e quadro kanban. Nome sempre "Prumo", com P maiúsculo e na fonte Pacifico; o restante em Inter. Frase: "Seus arquivos, no prumo."
 
-## Versão atual: 0.11.0
+## Versão atual: 0.11.1
 **Regra do usuário: sempre entregar juntos o `prumo.zip` e o instalador `.exe` (com `latest.yml` e `.blockmap`).** O .exe tem ~100 MB e o app do usuário não baixa arquivo desse tamanho: entregar também dividido em partes de 30 MB (`split -b 30m -d -a 1`, renomeadas `.bin`) com um `juntar.bat` (`copy /b parte0+parte1+... Prumo-Setup-X.exe`).
 **Usuário pediu: trabalhar só no app; não atualizar a landing page por enquanto.**
 
 **GitHub: https://github.com/Halfszin/prumo (público).** Esta sessão do Claude não pode criar releases nem enviar tags, então a publicação é pelo GitHub Actions (`.github/workflows/instalador.yml`): roda em `windows-latest`, faz `npm ci`, `node test-extras.js` e `electron-builder --win --publish always`, criando a release `vX.Y.Z` com o .exe, `latest.yml` e `.blockmap`. Para publicar uma versão nova: subir a versão no `package.json`, fazer push na `main` e disparar o workflow (`gh api -X POST repos/Halfszin/prumo/actions/workflows/instalador.yml/dispatches -f ref=main`) ou o botão "Run workflow" no GitHub. Link do instalador: https://github.com/Halfszin/prumo/releases/latest. A atualização automática usa por padrão `https://github.com/Halfszin/prumo/releases/latest/download` (`UPDATE_URL` no `main.js`).
+
+Novidades da 0.11.1: barra de rolagem da lista de pastas fina, sem as setas do Windows (o `scrollbar-width` desligava o estilo próprio), mais forte ao passar o mouse; no Dashboard, clicar num mês de "Atividade por mês" abre a lista com os arquivos daquele mês (`view='m:ANO-MES'`, mês de 0 a 11), com atalhos para o Calendário e de volta ao Dashboard.
 
 Novidades da 0.11.0:
 - **Organização automática corrigida**: ela só move arquivos de regras marcadas como Automático, e nenhuma regra padrão vinha marcada, então "ligada" não fazia nada. Agora, ao ligar sem nenhuma regra automática, o app pergunta e marca todas; a seção mostra as regras com caixas e avisa (`#bg-warn`) se nada está marcado. Testado no Electron: arquivo novo foi movido; `.crdownload` e o que já estava na pasta ficaram.

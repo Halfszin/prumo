@@ -586,8 +586,12 @@ dialog input[type=date],dialog input[type=time],dialog input[type=number]{width:
 @media(max-width:1000px){.notes{grid-template-columns:1fr}.nlist{position:static}#n-items{max-height:240px}}
 
 /* 0.11: barra lateral recolhida sem desvio (a barra de rolagem empurrava as pastas) */
-#nav-cats{scrollbar-width:thin}
-#nav-cats::-webkit-scrollbar{width:6px}
+#nav-cats::-webkit-scrollbar{width:8px}
+#nav-cats::-webkit-scrollbar-button{display:none}
+#nav-cats::-webkit-scrollbar-track{background:transparent}
+#nav-cats::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--side-dim) 22%,transparent);border:2px solid transparent;border-radius:99px;background-clip:content-box;transition:background .2s}
+#nav-cats:hover::-webkit-scrollbar-thumb{background:var(--sb);background-clip:content-box}
+#nav-cats::-webkit-scrollbar-thumb:hover{background:var(--sbh);background-clip:content-box}
 @media(min-width:901px){
 .app.slim #nav-cats{margin:0;padding:0;width:100%;scrollbar-width:none}
 .app.slim #nav-cats::-webkit-scrollbar{display:none}
@@ -662,6 +666,11 @@ main>.enter{animation:pagein .36s cubic-bezier(.16,1,.3,1)}
 @keyframes toastin{from{opacity:0;transform:translate(-50%,16px) scale(.96)}}
 
 .s-main .he h2{font-size:15px;margin:0}
+
+button.mo{border:0;background:none;padding:4px 0 0;font:inherit;color:inherit;cursor:pointer;border-radius:8px}
+button.mo:disabled{cursor:default}
+button.mo:not(:disabled):hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+button.mo:not(:disabled):hover i{filter:brightness(1.25)}
 body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}
 </style>
 </head>
@@ -881,6 +890,7 @@ const other=f=>f.folder&&!ownerOf(f);
   else if(view==='fav'){list=list.filter(isFav);title='Favoritos'}
   else if(view==='dup'){title='Duplicados';list=dupList().filter(matchQ);if(!dups)setTimeout(findDups)}
   else if(view==='old'){title='Arquivos antigos';list=list.filter(isOld)}
+  else if(view.startsWith('m:')){const [y,m]=view.slice(2).split('-').map(Number);title=MESL[m][0].toUpperCase()+MESL[m].slice(1)+' de '+y;list=list.filter(f=>inMonth(f,y,m))}
   else if(view.startsWith('t:')){title=view.slice(2);list=list.filter(f=>tagsOf(f).includes(title))}
   else if(view==='f:__outros'){title='Outros';list=list.filter(other)}
   else if(view.startsWith('f:')){title=view.slice(2);list=list.filter(f=>ownerOf(f)===title)}
@@ -1016,7 +1026,7 @@ function renderDash(){
   const now=new Date(),ms=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);ms.push({y:d.getFullYear(),m:d.getMonth(),n:0})}
   files.forEach(f=>{if(!f.mtime)return;const d=new Date(f.mtime),o=ms.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());if(o)o.n++});
   const mm=Math.max(...ms.map(x=>x.n),1);
-  const months=ms.map((x,i)=>`<div class="mo${i===5?' cur':''}${x.n?'':' z'}" title="${x.n} ${x.n===1?'arquivo':'arquivos'} em ${MESL[x.m]} de ${x.y}"><b>${x.n}</b><i style="height:${x.n?Math.max(6,Math.round(x.n/mm*84)):3}px"></i><small>${MES[x.m]}</small></div>`).join('');
+  const months=ms.map((x,i)=>`<button class="mo${i===5?' cur':''}${x.n?'':' z'}" data-month="${x.y}-${x.m}" ${x.n?'':'disabled'} title="${x.n} ${x.n===1?'arquivo':'arquivos'} em ${MESL[x.m]} de ${x.y}${x.n?'. Clique para ver':''}"><b>${x.n}</b><i style="height:${x.n?Math.max(6,Math.round(x.n/mm*84)):3}px"></i><small>${MES[x.m]}</small></button>`).join('');
   const curN=ms[5].n,prevN=ms[4].n,diff=prevN?Math.round((curN-prevN)/prevN*100):null,best=ms.reduce((q,x)=>x.n>q.n?x:q,ms[0]),avg=Math.round(ms.reduce((q,x)=>q+x.n,0)/6),pe=pendingN();
   const as=(l,v,t)=>`<div class="as"><small>${l}</small><b>${v}</b><em>${t}</em></div>`;
   const actBody=`<div class="months">${months}</div><div class="astats">${as('Este mês',curN,diff===null?(curN?'sem mês anterior':'sem atividade'):(diff>0?'+':'')+diff+'% vs. mês anterior')}${as('Mais ativo',best.n?MES[best.m]:'—',best.n?best.n+' arquivos':'sem atividade')}${as('Média',avg,'arquivos por mês')}${as('Lembretes',pe,pe===1?'pendente':pe?'pendentes':'nenhum pendente')}</div>`;
@@ -1027,8 +1037,9 @@ function renderDash(){
   const seg=`<div class="seg" role="group" aria-label="Medir por"><button data-m="n" aria-pressed="${dm==='n'}">Arquivos</button><button data-m="mb" aria-pressed="${dm==='mb'}">Espaço</button></div>`;
   $('dash-body').innerHTML=`<div class="kpis">${kpis}</div><div class="dcols">${card('pasta','Por pasta',bars,seg)}${card('download','Para organizar',pendH)}</div><div class="dcols">${card('calendario','Atividade por mês',actBody,'<button class="btn s" data-cal>Abrir calendário</button>')}${card('documentos','Maiores arquivos',bigH)}</div><div class="dcols">${card('copias','Arquivos duplicados',dupBody(),'<button class="btn s" data-view="dup">Ver duplicados</button>')}${card('arquivo','Arquivos antigos',oldBody(),'<button class="btn s" data-view="old">Ver antigos</button>')}</div>`;if(!dups)setTimeout(findDups);
 }
-$('p-dash').onclick=e=>{const t=e.target.closest('[data-go],[data-open],[data-m],[data-cal],[data-view],#dash-open');if(!t)return;
+$('p-dash').onclick=e=>{const t=e.target.closest('[data-go],[data-open],[data-m],[data-cal],[data-view],[data-month],#dash-open');if(!t)return;
   if(t.dataset.view){view=t.dataset.view;setPage('files');return}
+  if(t.dataset.month){view='m:'+t.dataset.month;setPage('files');return}
   if(t.id==='dash-open'){$('open').click();return}
   if(t.dataset.cal!==undefined){setPage('cal');return}
   if(t.dataset.m){dm=t.dataset.m;renderDash();return}
@@ -1236,9 +1247,13 @@ const oldBody=()=>{const l=files.filter(isOld),mb=l.reduce((a,f)=>a+f.mb,0);retu
 function renderVbar(){let h='';
   if(view==='dup'){if(!dups)h='<span>Procurando cópias idênticas (mesmo conteúdo, não só o mesmo nome)…</span>';else{const s=dupStats();h=s.g?`<span><b>${s.n} ${s.n===1?'cópia':'cópias'}</b> em ${s.g} ${s.g===1?'grupo':'grupos'} · apagando as cópias você recupera <b>${fmtS(s.mb)}</b>. O arquivo mais antigo de cada grupo fica.</span><button class="btn s" id="vb-mark">Marcar cópias</button>`:'<span>Nenhum arquivo duplicado nesta pasta.</span>'}}
   else if(view==='old'){const l=files.filter(isOld),mb=l.reduce((a,f)=>a+f.mb,0);h=l.length?`<span><b>${l.length}</b> ${l.length===1?'arquivo não é aberto':'arquivos não são abertos'} há mais de um ano · ${fmtS(mb)}</span><button class="btn s" id="vb-all">Marcar todos</button><button class="btn s" id="vb-arch"${sel.size?'':' disabled'}>Arquivar marcados</button>`:'<span>Nenhum arquivo parado há mais de um ano.</span>'}
+  if(view.startsWith('m:')){const [y,m]=view.slice(2).split('-').map(Number),l=files.filter(f=>inMonth(f,y,m)),mb=l.reduce((a,f)=>a+f.mb,0);h=`<span><b>${l.length}</b> ${l.length===1?'arquivo modificado':'arquivos modificados'} em ${MESL[m]} de ${y} · ${fmtS(mb)}</span><button class="btn s" id="vb-cal" data-y="${y}" data-m="${m}">Ver no calendário</button><button class="btn s" id="vb-back">Voltar ao Dashboard</button>`}
   if(qct&&query.length>=2)h+=searching?'<span>Buscando dentro de PDF, Word, Excel e textos…</span>':window.api?`<span>${hits.size} ${hits.size===1?'arquivo tem':'arquivos têm'} “${esc(query)}” no conteúdo.</span>`:'<span>A busca no conteúdo funciona no programa instalado. Aqui a busca é só pelo nome.</span>';
   $('vbar').innerHTML=h;$('vbar').hidden=!h}
+const inMonth=(f,y,m)=>{if(!f.mtime)return false;const d=new Date(f.mtime);return d.getFullYear()===y&&d.getMonth()===m};
 $('vbar').onclick=e=>{const id=e.target.id;
+  if(id==='vb-cal'){setPage('cal');calGo(dkey(new Date(+e.target.dataset.y,+e.target.dataset.m,1)));return}
+  if(id==='vb-back'){view='all';setPage('dash');return}
   if(id==='vb-mark'){sel.clear();dupGroups().forEach(g=>g.slice(1).forEach(f=>sel.add(f.id)));render();toast(sel.size+' cópias marcadas. Use Excluir para mandar para a Lixeira')}
   else if(id==='vb-all'){files.filter(isOld).forEach(f=>sel.add(f.id));render()}
   else if(id==='vb-arch')archiveSel()};
