@@ -672,7 +672,17 @@ button.mo:disabled{cursor:default}
 button.mo:not(:disabled):hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 button.mo:not(:disabled):hover i{filter:brightness(1.25)}
 
-#upd.dl{background:linear-gradient(90deg,var(--accent) var(--pct,0%),color-mix(in srgb,var(--accent) 35%,var(--card)) var(--pct,0%));opacity:1;cursor:default;font-variant-numeric:tabular-nums}
+#upd-old.dl{background:linear-gradient(90deg,var(--accent) var(--pct,0%),color-mix(in srgb,var(--accent) 35%,var(--card)) var(--pct,0%));opacity:1;cursor:default;font-variant-numeric:tabular-nums}
+
+.uacts{display:flex;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.uprog{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:4px 0 6px}
+.uprog i{display:block;height:100%;width:var(--pct,0%);background:var(--accent);border-radius:99px;transition:width .4s ease}
+.uadv{margin-top:6px;border-top:1px solid var(--line);padding-top:12px}
+.uadv summary{cursor:pointer;color:var(--dim);font-size:13px;font-weight:600}
+.uadv[open] summary{margin-bottom:6px}
+#set-btn{position:relative}
+#set-btn.has-upd::after{content:"";position:absolute;left:28px;top:9px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--side)}
+.app.slim #set-btn.has-upd::after{left:auto;right:12px;top:6px}
 body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}
 </style>
 </head>
@@ -690,7 +700,7 @@ body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!importan
 <main>
 <header class="topbar"><nav class="crumb" id="crumb" aria-label="Local"></nav>
 <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Buscar nos arquivos" aria-label="Buscar nos arquivos"><button class="qmode" id="q-ct" type="button" aria-pressed="false" title="Buscar também dentro de PDF, Word, Excel e textos">Conteúdo</button><kbd>Ctrl F</kbd></label>
-<button class="btn p s" id="upd" hidden title="Uma versão nova está pronta">Atualizar</button><button class="ib" id="theme-btn" title="Alternar tema claro e escuro" aria-label="Alternar tema"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></header>
+<button class="ib" id="theme-btn" title="Alternar tema claro e escuro" aria-label="Alternar tema"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></header>
 <div id="p-files">
 <div class="phead"><div><h1 id="list-title">Todos os arquivos</h1><p class="sub" id="list-count"></p></div>
 <div class="pbtn"><button class="btn" id="refresh" title="Reler a pasta (F5)" aria-label="Atualizar lista"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg> Atualizar</button><button class="btn" id="open2"><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-pasta"/></svg> Abrir pasta</button><button class="btn" id="undo" hidden title="Desfaz a última organização de arquivos"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg> Desfazer</button><button class="btn" id="nfe-btn" title="Lê as NF-e em XML desta pasta e organiza por fornecedor, ano e mês"><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-notas"/></svg> Ler NF-e</button><button class="btn p" id="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg> <span id="go-t">Organizar tudo</span></button></div></div>
@@ -808,9 +818,11 @@ body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!importan
 <div data-pane="hist" hidden><h2>Histórico</h2><p class="hint" id="h-sub"></p><div id="h-list" class="hlist"></div></div>
 
 <div data-pane="about" hidden><h2>Sobre e atualizações</h2><p class="hint"><span class="pn">Prumo</span> <span id="a-ver"></span> · código aberto, licença MIT.</p>
-<section class="sc"><h3>Atualizações</h3><p class="hint">Endereço onde ficam os arquivos da versão mais nova. O <span class="pn">Prumo</span> confere sozinho a cada poucas horas.</p>
-<p><input type="text" id="u-url" placeholder="Padrão: https://github.com/Halfszin/prumo/releases/latest/download" aria-label="Endereço das atualizações"></p>
-<div class="srow" style="border:0;padding-bottom:0"><span class="hint" id="u-st"></span><button class="btn s" id="u-check">Verificar agora</button></div></section>
+<section class="sc" id="u-card"><h3>Atualizações</h3>
+<div class="srow"><div><b id="u-head">Atualizado</b><small id="u-st">O <span class="pn">Prumo</span> procura versões novas sozinho a cada poucas horas.</small></div><div class="uacts"><button class="btn s" id="u-check">Verificar agora</button><button class="btn p s" id="u-install" hidden>Reiniciar e atualizar</button></div></div>
+<div class="uprog" id="u-prog" hidden><i></i></div>
+<div class="srow"><div><b>Instalar sozinho ao fechar</b><small>Como no Discord: a versão nova é baixada em segundo plano e instalada em silêncio quando você fechar o <span class="pn">Prumo</span>, sem telas de instalação.</small></div><button class="switch" id="u-auto" role="switch" aria-checked="true" aria-label="Instalar sozinho ao fechar"><i></i></button></div>
+<details class="uadv"><summary>Avançado</summary><p class="hint">Endereço onde ficam os arquivos da versão mais nova.</p><input type="text" id="u-url" placeholder="Padrão: https://github.com/Halfszin/prumo/releases/latest/download" aria-label="Endereço das atualizações"></details></section>
 <section class="sc"><h3>Onde ficam seus dados</h3><p class="hint" id="a-data"></p><div class="acts" style="justify-content:flex-start"><button class="btn" id="a-welcome">Rever boas-vindas</button></div></section></div>
 </section></div>
 <dialog id="welcome"><h2>Bem-vindo ao <span class="pn">Prumo</span></h2><p class="hint">Seus arquivos, no prumo. Em três passos:</p>
@@ -1128,7 +1140,7 @@ async function applyPrefs(){const r=document.documentElement;
   document.body.classList.toggle('dense',!!prefs.dense);document.body.classList.toggle('noanim',!!prefs.noAnim);$('app').classList.toggle('slim',!!prefs.collapsed);
 }
 function syncSettings(){const m=(id,v)=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
-  m('theme-seg',prefs.theme||'dark');m('dense-seg',prefs.dense?'1':'0');$('sub-seg').setAttribute('aria-checked',!!prefs.subOn);$('sub-fmt').value=prefs.subFmt||'ym';$('sub-fmt').disabled=!prefs.subOn;$('sub-ex').textContent=prefs.subOn?'Exemplo: Notas fiscais/'+(prefs.subFmt==='y'?'2026':'2026/10'):'Desligado: os arquivos ficam direto na pasta da regra.';$('anim-seg').setAttribute('aria-checked',!prefs.noAnim);$('bg-seg').setAttribute('aria-checked',!!bg.on);$('bg-folder').textContent=bg.folder||downloadsPath||'Downloads';$('bg-start').checked=!!bg.startup;$('u-url').value=upd.url||'';const na=!rules.some(r=>r.auto);$('bg-warn').hidden=!(bg.on&&na);$('bg-warn').textContent='Nenhuma regra está marcada para organizar sozinha, então nada será movido. Marque as regras abaixo.'}
+  m('theme-seg',prefs.theme||'dark');m('dense-seg',prefs.dense?'1':'0');$('sub-seg').setAttribute('aria-checked',!!prefs.subOn);$('sub-fmt').value=prefs.subFmt||'ym';$('sub-fmt').disabled=!prefs.subOn;$('sub-ex').textContent=prefs.subOn?'Exemplo: Notas fiscais/'+(prefs.subFmt==='y'?'2026':'2026/10'):'Desligado: os arquivos ficam direto na pasta da regra.';$('anim-seg').setAttribute('aria-checked',!prefs.noAnim);$('bg-seg').setAttribute('aria-checked',!!bg.on);$('bg-folder').textContent=bg.folder||downloadsPath||'Downloads';$('bg-start').checked=!!bg.startup;$('u-url').value=upd.url||'';$('u-auto').setAttribute('aria-checked',upd.auto!==false);const na=!rules.some(r=>r.auto);$('bg-warn').hidden=!(bg.on&&na);$('bg-warn').textContent='Nenhuma regra está marcada para organizar sozinha, então nada será movido. Marque as regras abaixo.'}
 async function aboutInfo(){const i=window.api?await api.paths():{};$('a-ver').textContent=i.version?'versão '+i.version:'prévia na web';$('a-data').textContent=i.userData||'—'}
 const askC=(t,m,ok='Confirmar')=>new Promise(res=>{const d=$('cdlg');$('c-t').textContent=t;$('c-m').textContent=m;$('c-ok').textContent=ok;let r=false;const done=()=>{d.removeEventListener('close',done);res(r)};d.addEventListener('close',done);$('c-ok').onclick=()=>{r=true;d.close()};$('c-no').onclick=()=>d.close();d.showModal();$('c-no').focus()});
 function renderRules(){$('r-rows').innerHTML='<div class="rr rh"><span>Pasta</span><span>Palavras no nome</span><span>Extensões</span><span title="Organizar automaticamente em segundo plano">Auto</span><span></span></div>'+rules.map((r,i)=>`<div class="rr"><input type="text" data-i="${i}" data-k="folder" value="${esc(r.folder)}" aria-label="Pasta"><input type="text" data-i="${i}" data-k="kw" value="${esc(r.kw)}" placeholder="—" aria-label="Palavras no nome"><input type="text" data-i="${i}" data-k="ext" value="${esc(r.ext)}" placeholder="—" aria-label="Extensões"><input type="checkbox" class="auto" data-i="${i}" data-k="auto" ${r.auto?'checked':''} title="Organizar automaticamente em segundo plano" aria-label="Automático"><button class="x" style="visibility:visible" data-del="${i}" aria-label="Excluir regra">×</button></div>`).join('')}
@@ -1202,24 +1214,25 @@ async function refresh(quiet){if(!window.api||!root){if(!quiet)toast('Abra uma p
     const f=sp&&files.find(x=>x.path===sp);if(f)select(f.id);if(!quiet)toast('Lista atualizada')}catch(e){if(!quiet)toast('Não foi possível ler a pasta')}}
 $('refresh').onclick=()=>refresh(false);
 addEventListener('focus',()=>{if(Date.now()-lastRef>3000)refresh(true)});
-const showUpd=m=>{$('upd').hidden=false;$('upd').disabled=false;$('upd').classList.remove('dl');$('upd').textContent='Atualizar para '+m.version;$('upd').title='Reinicia o Prumo e instala a versão '+m.version};
-$('upd').onclick=()=>{if(!$('upd').disabled&&window.api)api.installUpdate()};
-// progresso da atualização: botão no alto da tela e texto em Configurações > Sobre
+// atualização: tudo em Configurações > Sobre e atualizações; um ponto na engrenagem avisa quando há versão pronta
 let updWas='';
-function updUI(p){if(!p)return;const b=$('upd'),st=$('u-st');
-  if(p.phase==='downloading'){const t=`Baixando ${p.version||'atualização'}… ${p.percent||0}%`;b.hidden=false;b.disabled=true;b.classList.add('dl');b.style.setProperty('--pct',(p.percent||0)+'%');b.textContent=t;b.title='A versão nova está sendo baixada. Você pode continuar usando o Prumo.';st.textContent=t+(p.total?` (${fmt(p.done/1048576)} de ${fmt(p.total/1048576)})`:'')}
-  else if(p.phase==='ready'){showUpd(p);st.textContent=`A versão ${p.version} está pronta. Clique em "Atualizar para ${p.version}" no alto da tela para reiniciar e instalar.`;if(updWas!=='ready')toast('Versão '+p.version+' pronta. Clique em Atualizar, no alto da tela')}
-  else if(p.phase==='error'){if(b.classList.contains('dl'))b.hidden=true;st.textContent='Não foi possível baixar a atualização: '+p.message+'. Tente de novo em Verificar agora.';if(updWas!=='error')toast('Não foi possível baixar a atualização')}
-  else if(p.phase==='checking')st.textContent='Procurando versão nova…';
-  else if(p.phase==='latest')st.textContent='Você já está na versão mais recente.';
+function updUI(p){if(!p)return;const st=$('u-st'),hd=$('u-head'),pr=$('u-prog'),ins=$('u-install');
+  pr.hidden=p.phase!=='downloading';ins.hidden=p.phase!=='ready';$('set-btn').classList.toggle('has-upd',p.phase==='ready');
+  if(p.phase==='downloading'){hd.textContent=`Baixando a versão ${p.version||'nova'}… ${p.percent||0}%`;pr.style.setProperty('--pct',(p.percent||0)+'%');st.textContent=(p.total?`${fmt(p.done/1048576)} de ${fmt(p.total/1048576)}. `:'')+'Pode continuar usando o Prumo normalmente.'}
+  else if(p.phase==='ready'){hd.textContent=`Versão ${p.version} pronta`;st.textContent=upd.auto===false?'Clique em Reiniciar e atualizar. Leva poucos segundos e não abre nenhuma tela de instalação.':'Será instalada sozinha quando você fechar o Prumo. Ou clique em Reiniciar e atualizar agora.';if(updWas!=='ready')toast('Versão '+p.version+' pronta. Veja em Configurações > Sobre e atualizações')}
+  else if(p.phase==='error'){hd.textContent='Não deu para atualizar';st.textContent=p.message+'. Tente de novo em Verificar agora.'}
+  else if(p.phase==='checking'){hd.textContent='Procurando versão nova…';st.textContent=''}
+  else if(p.phase==='latest'){hd.textContent='Você está na versão mais recente';st.textContent='O Prumo procura versões novas sozinho a cada poucas horas.'}
   updWas=p.phase}
+$('u-install').onclick=()=>{if(window.api){$('u-head').textContent='Reiniciando para atualizar…';api.installUpdate()}};
+$('u-auto').onclick=()=>{upd.auto=upd.auto===false;save('update',upd);$('u-auto').setAttribute('aria-checked',upd.auto!==false)};
 $('bg-seg').onclick=async()=>{if(!window.api){toast('Disponível no programa instalado');return}bg.on=!bg.on;
   if(bg.on&&!rules.some(r=>r.auto)&&await askC('Organizar quais arquivos?','Nenhuma regra está marcada para organizar sozinha. Quer marcar todas? Você pode desmarcar uma por uma depois.','Marcar todas'))setAllAuto(true);
   save('bg',bg);syncSettings();if(bg.on)toast('Organização automática ligada. Os arquivos novos que chegarem em '+(bg.folder||downloadsPath||'Downloads')+' serão organizados')};
 $('bg-pick').onclick=async()=>{const q=window.api&&await api.pickDir();if(q){bg.folder=q;save('bg',bg);syncSettings()}};
 $('bg-start').onchange=()=>{bg.startup=$('bg-start').checked;save('bg',bg)};
 $('u-url').onchange=()=>{upd.url=$('u-url').value.trim();save('update',upd)};
-$('u-check').onclick=async()=>{$('u-st').textContent='Verificando…';$('u-st').textContent=window.api?await api.checkUpdate():'Funciona no programa instalado.'};
+$('u-check').onclick=async()=>{if(!window.api){$('u-head').textContent='Funciona no programa instalado';return}$('u-head').textContent='Procurando versão nova…';const r=await api.checkUpdate();if(!['downloading','ready','error'].includes(updWas))$('u-head').textContent=r};
 // ===== 0.10: favoritos, etiquetas, revisar, duplicados, antigos, busca no conteúdo, NF-e, renomear em lote, histórico, quadro com data, lembretes, notas
 let meta={},tagdefs=[],notes=[],recur=[],dups=null,dupBusy=false,hits=new Map(),qct=false,searching=false,webHist=[],planPre=null,planKind=null;
 const DEF_TAGS=[{n:'Importante',c:'#ef4444'},{n:'Trabalho',c:'#3b82f6'},{n:'Pessoal',c:'#22c55e'}];
@@ -1478,7 +1491,7 @@ addEventListener('scroll',hideImgBar,true);addEventListener('resize',hideImgBar)
 (async()=>{let st={};
   if(window.api){st=await api.getState();files=[];setUndo(await api.undoCount())}
   else try{st.rules=JSON.parse(localStorage.getItem('arrumei-rules'));st.board=JSON.parse(localStorage.getItem('arrumei-board'));st.prefs=JSON.parse(localStorage.getItem('arrumei-prefs'));st.events=JSON.parse(localStorage.getItem('arrumei-events'));st.colors=JSON.parse(localStorage.getItem('arrumei-colors'));for(const k of ['meta','tagdefs','notes','recur'])st[k]=JSON.parse(localStorage.getItem('arrumei-'+k))}catch(e){}
-  colors={...(st.colors||{})};setRules(st.rules&&st.rules.length?st.rules:JSON.parse(JSON.stringify(DEFAULT_RULES)));prefs={...(st.prefs||{})};bg={...(st.bg||{})};events={...(st.events||{})};upd={...(st.update||{})};meta={...(st.meta||{})};tagdefs=st.tagdefs||DEF_TAGS.map(x=>({...x}));notes=st.notes||[welcomeNote()];recur=st.recur||[];qct=!!prefs.qct;$('q-ct').setAttribute('aria-pressed',qct);applyPrefs();if(window.api){downloadsPath=(await api.paths()).downloads;api.onFilesChanged(()=>refresh(true));api.onBgChanged(async()=>{bg={...((await api.getState()).bg||{})};syncSettings()});api.onUpdate(showUpd);api.onUpdateStatus(updUI);api.updateStatus().then(updUI);api.onOpenCal(k=>{setPage('cal');calGo(k)});api.updateState().then(m=>{if(m)showUpd(m)})}if(st.board)board=st.board;if(st.prefs&&st.prefs.mode)mode=st.prefs.mode;else if(window.api)mode='details';destBase=(st.prefs&&st.prefs.dest)||'';
+  colors={...(st.colors||{})};setRules(st.rules&&st.rules.length?st.rules:JSON.parse(JSON.stringify(DEFAULT_RULES)));prefs={...(st.prefs||{})};bg={...(st.bg||{})};events={...(st.events||{})};upd={...(st.update||{})};meta={...(st.meta||{})};tagdefs=st.tagdefs||DEF_TAGS.map(x=>({...x}));notes=st.notes||[welcomeNote()];recur=st.recur||[];qct=!!prefs.qct;$('q-ct').setAttribute('aria-pressed',qct);applyPrefs();if(window.api){downloadsPath=(await api.paths()).downloads;api.onFilesChanged(()=>refresh(true));api.onBgChanged(async()=>{bg={...((await api.getState()).bg||{})};syncSettings()});api.onUpdateStatus(updUI);api.updateStatus().then(updUI);api.onOpenCal(k=>{setPage('cal');calGo(k)})}if(st.board)board=st.board;if(st.prefs&&st.prefs.mode)mode=st.prefs.mode;else if(window.api)mode='details';destBase=(st.prefs&&st.prefs.dest)||'';
   if(window.api&&st.root){try{loadFiles(await api.scan(st.root))}catch(e){}}
   setMode(mode);if(window.api&&!prefs.welcomed)showWelcome()})();
 </script>

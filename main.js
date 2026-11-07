@@ -271,7 +271,8 @@ const updLog = (lvl) => (m) => { try { fsSync.appendFileSync(path.join(app.getPa
 function updater() {
   const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   const { autoUpdater } = require('electron-updater');
-  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
+  // instala em silêncio ao fechar (como o Discord), a menos que o usuário desligue
+  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = (state.update || {}).auto !== false;
   autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
   if (!updaterOn) {
     updaterOn = true;
@@ -295,7 +296,8 @@ function setupUpdater() {
 }
 ipcMain.handle('update:state', () => readyUpdate);
 ipcMain.handle('update:status', () => updInfo);
-ipcMain.handle('update:install', () => { try { require('electron-updater').autoUpdater.quitAndInstall(); } catch {} });
+// silencioso (sem as telas do instalador) e abre o Prumo de novo ao terminar
+ipcMain.handle('update:install', () => { try { require('electron-updater').autoUpdater.quitAndInstall(true, true); } catch {} });
 ipcMain.handle('update:check', async () => {
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
   if (updInfo.phase === 'downloading') return `Baixando a versão ${updInfo.version}… ${updInfo.percent || 0}%`;
