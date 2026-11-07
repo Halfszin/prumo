@@ -262,8 +262,10 @@ function applyBg() {
   if (b.on) { if (!tray) makeTray(); watcher.start(); } else { watcher.stop(); if (tray) { tray.destroy(); tray = null; } }
 }
 // ---- atualização automática (endereço definido nas configurações) ----
+// sem endereço nas configurações, usa as versões publicadas no GitHub
+const UPDATE_URL = 'https://github.com/Halfszin/prumo/releases/latest/download';
 function setupUpdater() {
-  const u = state.update || {};
+  const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   if (!app.isPackaged || !u.url) return;
   try {
     const { autoUpdater } = require('electron-updater');
@@ -280,7 +282,7 @@ function setupUpdater() {
 ipcMain.handle('update:state', () => readyUpdate);
 ipcMain.handle('update:install', () => { try { require('electron-updater').autoUpdater.quitAndInstall(); } catch {} });
 ipcMain.handle('update:check', async () => {
-  const u = state.update || {};
+  const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
   if (!u.url) return 'Informe o endereço das atualizações.';
   try {

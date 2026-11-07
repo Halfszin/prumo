@@ -40,8 +40,10 @@
     },
     "publish": [
       {
-        "provider": "generic",
-        "url": "https://exemplo.invalid/prumo"
+        "provider": "github",
+        "owner": "Halfszin",
+        "repo": "prumo",
+        "releaseType": "release"
       }
     ]
   },
