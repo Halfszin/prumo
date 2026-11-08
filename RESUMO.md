@@ -5,11 +5,21 @@ Use este arquivo para continuar em uma conversa nova. Envie também o `prumo.zip
 ## O que é
 Organizador de arquivos open source (MIT) para Windows, em Electron. Lê uma pasta (ex.: Downloads), mostra um **plano** (arquivo -> pasta) e só move depois de confirmar. Tem **Desfazer**, regras editáveis, pré-visualização e quadro kanban. Nome sempre "Prumo", com P maiúsculo e na fonte Pacifico; o restante em Inter. Frase: "Seus arquivos, no prumo."
 
-## Versão atual: 0.11.5
+## Versão atual: 0.12.0
 **Regra do usuário: sempre entregar juntos o `prumo.zip` e o instalador `.exe` (com `latest.yml` e `.blockmap`).** O .exe tem ~100 MB e o app do usuário não baixa arquivo desse tamanho: entregar também dividido em partes de 30 MB (`split -b 30m -d -a 1`, renomeadas `.bin`) com um `juntar.bat` (`copy /b parte0+parte1+... Prumo-Setup-X.exe`).
 **Usuário pediu: trabalhar só no app; não atualizar a landing page por enquanto.**
 
 **GitHub: https://github.com/Halfszin/prumo (público).** Esta sessão do Claude não pode criar releases nem enviar tags, então a publicação é pelo GitHub Actions (`.github/workflows/instalador.yml`): roda em `windows-latest`, faz `npm ci`, `node test-extras.js` e `electron-builder --win --publish always`, criando a release `vX.Y.Z` com o .exe, `latest.yml` e `.blockmap`. Para publicar uma versão nova: subir a versão no `package.json`, fazer push na `main` e disparar o workflow (`gh api -X POST repos/Halfszin/prumo/actions/workflows/instalador.yml/dispatches -f ref=main`) ou o botão "Run workflow" no GitHub. Link do instalador: https://github.com/Halfszin/prumo/releases/latest. A atualização automática usa por padrão `https://github.com/Halfszin/prumo/releases/latest/download` (`UPDATE_URL` no `main.js`).
+
+Novidades da 0.12.0:
+- **Links nas notas**: digitar `[[` abre a lista de notas (setas + Enter; cria a nota se não existir); `[[Nome]]` digitado inteiro também vira link. Ctrl+K ou o botão Link: link para página (http/https/mailto) ou nota, sobre o texto selecionado. Endereço digitado (https://… ou www.…) vira link ao dar espaço; colar um endereço também. Clicar abre a nota ou o navegador (`api.openUrl` -> `shell.openExternal`, só http/https/mailto). Cada nota mostra "Mencionada em" (notas que linkam para ela). Links de nota são `<a class=nlink data-note=id contenteditable=false>`; o título é atualizado ao abrir; nota excluída aparece riscada. Inserção pelo `insertAtCaret` (o insertHTML quebrava o parágrafo).
+- **Ordem manual das notas**: arrastar na lista ou Alt + setas (`n.order`); fixadas continuam em cima; editar não muda mais a ordem.
+- **Corretor ortográfico**: usa o corretor do Windows (offline), com sugestões, "Adicionar ao dicionário", recortar/copiar/colar no botão direito (`contextMenu` no main.js). Liga/desliga em Aparência (`prefs.spell`).
+- **Privacidade e jurídico**: `PRIVACIDADE.md` e `TERMOS.md` (também dentro do app, em `#docs-data`, gerados do .md); aviso de privacidade na primeira abertura (`prefs.privacyOk` = versão da política `PRIV_VER`; não é banner de cookies porque o app não usa cookies). Configurações > Privacidade e dados: o que fica guardado, tabela de retenção, desligar a procura de atualizações (`update.check`; desligado, o app não se conecta a nada), abrir pasta, exportar (pasta com `prumo-dados.json` + imagens), apagar tudo (reinicia do zero; arquivos do usuário não são tocados). Configurações > Termos e licenças.
+- **Retenção implementada**: histórico 90 dias ou 200 ações (`pruneHistory`), update.log até ~512 KB (rotação), imagens sem uso apagadas após 1 dia (`cleanNoteImages`, 15 s depois de abrir), marcas de lembrete 3 dias, cache de busca só em memória.
+- **Contraste WCAG AA**: tokens `--accent-text` (texto roxo) e `--danger`; botões roxos com #7c3aed (5,7:1); cinzas do tema claro escurecidos. Medido com scripts/contraste (no histórico desta versão).
+- **Licenças**: ícones antigos (pareciam do pacote Iconly, licença não confirmada) trocados por desenhos próprios; `THIRD_PARTY_LICENSES.txt` gerado por `scripts/licencas.js` (53 componentes + fontes Inter e Pacifico, SIL OFL) e copiado para a pasta do programa (`extraResources`); LICENSE e package.json com o nome certo (antes "Arrumei").
+- Pendente sugerido ao usuário: a landing page (`site/`) carrega fontes do Google Fonts (envia o IP ao Google); trocar por fontes embutidas quando voltar a mexer nela.
 
 Novidades da 0.11.5: a lista de notas piscava a cada letra (era refeita inteira e a animação de entrada rodava de novo). Agora a digitação só atualiza o item aberto (`noteTouch`); a lista só é refeita quando a ordem muda, e a animação só roda ao abrir a tela de Notas (`#n-items.anim`).
 
@@ -70,6 +80,7 @@ Novidades desta versão: botão **Atualizar** (F5 e releitura ao voltar para a j
 ## Estrutura da pasta `prumo/`
 - `main.js` processo principal: janela, bandeja, IPC, atualização, estado salvo em `%APPDATA%\Prumo\prumo.json`.
 - `fsops.js` mover arquivo sem sobrescrever e com nomes seguros para o Windows.
+- `PRIVACIDADE.md`, `TERMOS.md`, `THIRD_PARTY_LICENSES.txt` (gerar de novo com `node scripts/licencas.js <pasta LICENSE Inter> <pasta LICENSE Pacifico>` quando mudar dependências).
 - `extras.js` NF-e, hash de duplicados e texto de PDF/Word/Excel (sem Electron). Autoteste: `test-extras.js`.
 - `background.js` vigia a pasta e organiza só o que é seguro (ver abaixo). Testado com script Node.
 - `preload.js` ponte segura entre tela e processo principal.

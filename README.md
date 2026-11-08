@@ -15,6 +15,8 @@ Organizador de arquivos open source (MIT) para Windows.
 - **Busca no conteúdo** de PDF, Word, Excel e textos.
 - **Notas** com texto rico, tarefas, atalhos de Markdown e imagens no meio do texto.
 - **Calendário** com lembretes que se repetem e aviso do Windows na hora; cartões do Quadro com data e cor aparecem no calendário.
+- **Notas com links** entre elas (`[[`) e para páginas da web, ordem que você escolher e corretor ortográfico offline.
+- **Privacidade**: não coleta nenhum dado. Veja [PRIVACIDADE.md](PRIVACIDADE.md) e [TERMOS.md](TERMOS.md).
 - Tecla **Delete** exclui (vai para a Lixeira, com confirmação).
 - Renomear e escolher pasta por arquivo, com opção de local livre (pasta relativa ou caminho completo como `D:\Financeiro`).
 - Nomes inválidos do Windows são corrigidos; arquivos nunca são sobrescritos (`nome (1).ext`); arquivos em uso são pulados e avisados.

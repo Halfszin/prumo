@@ -64,8 +64,9 @@ ipcMain.handle('pick-folder', async () => {
 ipcMain.handle('scan', (_e, root) => scan(root));
 // favoritos e etiquetas ficam por caminho; acompanham o arquivo quando ele muda de lugar
 const remapMeta = (from, to) => { const m = state.meta; if (m && m[from]) { m[to] = m[from]; delete m[from]; } };
-const HMAX = 200;
-const record = (items, extra) => { state.history = [...(state.history || []), { id: crypto.randomUUID(), time: Date.now(), items, ...extra }].slice(-HMAX); };
+const HMAX = 200, HDAYS = 90; // retenção do histórico (ver PRIVACIDADE.md)
+const pruneHistory = () => { const lim = Date.now() - HDAYS * 864e5; state.history = (state.history || []).filter((e) => e.time >= lim).slice(-HMAX); };
+const record = (items, extra) => { state.history = [...(state.history || []), { id: crypto.randomUUID(), time: Date.now(), items, ...extra }]; pruneHistory(); };
 ipcMain.handle('apply', async (_e, { root, dest, ops, kind }) => {
   const res = [], done = [];
   for (const o of ops) {
@@ -267,7 +268,13 @@ const UPDATE_URL = 'https://github.com/Halfszin/prumo/releases/latest/download';
 // estado do download mostrado na tela (progresso, pronto, erro); registro em %APPDATA%\Prumo\update.log
 let updInfo = { phase: 'idle' }, lastProg = 0;
 const updSend = (p) => { updInfo = p; send('update-status', p); };
-const updLog = (lvl) => (m) => { try { fsSync.appendFileSync(path.join(app.getPath('userData'), 'update.log'), `${new Date().toISOString()} ${lvl} ${m}\n`); } catch {} };
+const updLog = (lvl) => (m) => {
+  try {
+    const f = path.join(app.getPath('userData'), 'update.log');
+    if (fsSync.existsSync(f) && fsSync.statSync(f).size > 256 * 1024) fsSync.renameSync(f, f.replace(/\.log$/, '.old.log')); // retenção: no máximo ~512 KB
+    fsSync.appendFileSync(f, `${new Date().toISOString()} ${lvl} ${m}\n`);
+  } catch {}
+};
 function updater() {
   const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   const { autoUpdater } = require('electron-updater');
@@ -286,12 +293,12 @@ function updater() {
     });
     autoUpdater.on('update-downloaded', (i) => { readyUpdate = { version: i.version }; updSend({ phase: 'ready', version: i.version }); send('update', readyUpdate); });
     autoUpdater.on('error', (e) => updSend({ phase: 'error', message: String((e && e.message) || e).split('\n')[0].slice(0, 200) }));
-    setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 3600e3);
+    setInterval(() => { if ((state.update || {}).check !== false) autoUpdater.checkForUpdates().catch(() => {}); }, 4 * 3600e3);
   }
   return autoUpdater;
 }
 function setupUpdater() {
-  if (!app.isPackaged) return;
+  if (!app.isPackaged || (state.update || {}).check === false) return;
   try { updater().checkForUpdates().catch(() => {}); } catch {}
 }
 ipcMain.handle('update:state', () => readyUpdate);
@@ -301,29 +308,84 @@ ipcMain.handle('update:install', () => { try { require('electron-updater').autoU
 ipcMain.handle('update:check', async () => {
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
   if (updInfo.phase === 'downloading') return `Baixando a versão ${updInfo.version}… ${updInfo.percent || 0}%`;
-  if (readyUpdate) return `A versão ${readyUpdate.version} está pronta. Clique em "Atualizar para ${readyUpdate.version}" no alto da tela.`;
+  if (readyUpdate) return `A versão ${readyUpdate.version} está pronta. Clique em Reiniciar e atualizar.`;
   try {
     const r = await updater().checkForUpdates();
     const v = r && r.updateInfo && r.updateInfo.version;
-    return v && v !== app.getVersion() ? `Versão ${v} encontrada. Baixando… o progresso aparece no alto da tela.` : 'Você já está na versão mais recente.';
+    return v && v !== app.getVersion() ? `Versão ${v} encontrada. Baixando…` : 'Você está na versão mais recente';
   } catch (e) { return 'Não foi possível verificar: ' + e.message; }
 });
+
+// links das notas abrem no navegador padrão; só http, https e e-mail
+const webUrl = (u) => { try { const x = new URL(String(u)); return ['http:', 'https:', 'mailto:'].includes(x.protocol) ? x.href : null; } catch { return null; } };
+ipcMain.handle('open-url', (_e, u) => { const x = webUrl(u); if (x) shell.openExternal(x); return !!x; });
+
+// seus dados: exportar, abrir a pasta e apagar tudo (os arquivos organizados não são tocados)
+const notesDir = () => path.join(app.getPath('userData'), 'notas');
+ipcMain.handle('data:export', async () => {
+  const r = await dialog.showOpenDialog({ title: 'Onde salvar seus dados', properties: ['openDirectory', 'createDirectory'] });
+  refocus();
+  if (r.canceled) return null;
+  const out = path.join(r.filePaths[0], 'Prumo - meus dados ' + new Date().toISOString().slice(0, 10));
+  await fs.mkdir(path.join(out, 'notas'), { recursive: true });
+  const { notified, ...data } = state;
+  await fs.writeFile(path.join(out, 'prumo-dados.json'), JSON.stringify({ app: 'Prumo', versao: app.getVersion(), exportado: new Date().toISOString(), dados: data }, null, 2));
+  for (const f of await fs.readdir(notesDir()).catch(() => [])) await fs.copyFile(path.join(notesDir(), f), path.join(out, 'notas', f)).catch(() => {});
+  return out;
+});
+ipcMain.handle('data:open', () => shell.openPath(app.getPath('userData')));
+ipcMain.handle('licenses', () => shell.openPath(app.isPackaged ? path.join(process.resourcesPath, 'THIRD_PARTY_LICENSES.txt') : path.join(__dirname, 'THIRD_PARTY_LICENSES.txt')));
+ipcMain.handle('data:wipe', async () => {
+  watcher.stop();
+  try { app.setLoginItemSettings({ openAtLogin: false }); } catch {}
+  state = {};
+  for (const f of [storeFile(), oldStore(), path.join(app.getPath('userData'), 'update.log'), path.join(app.getPath('userData'), 'update.old.log')]) await fs.rm(f, { force: true }).catch(() => {});
+  await fs.rm(notesDir(), { recursive: true, force: true }).catch(() => {});
+  app.relaunch(); app.exit(0);
+});
+// retenção: imagens que nenhuma nota usa mais são apagadas (as de menos de 1 dia ficam, podem estar sendo salvas)
+async function cleanNoteImages() {
+  const used = JSON.stringify(state.notes || []);
+  for (const f of await fs.readdir(notesDir()).catch(() => [])) {
+    const p = path.join(notesDir(), f);
+    try { if (!used.includes(f) && Date.now() - (await fs.stat(p)).mtimeMs > 864e5) await fs.rm(p); } catch {}
+  }
+}
+// corretor ortográfico: usa o corretor do próprio Windows, que funciona sem internet
+ipcMain.handle('spell', (_e, on) => { if (mainWin) mainWin.webContents.session.setSpellCheckerEnabled(!!on); });
+function contextMenu(w, p) {
+  const items = [];
+  if (p.misspelledWord) {
+    for (const s of p.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => w.webContents.replaceMisspelling(s) });
+    if (!p.dictionarySuggestions.length) items.push({ label: 'Sem sugestões', enabled: false });
+    items.push({ label: 'Adicionar ao dicionário', click: () => w.webContents.session.addWordToSpellCheckerDictionary(p.misspelledWord) }, { type: 'separator' });
+  }
+  const link = webUrl(p.linkURL);
+  if (link) items.push({ label: 'Abrir link no navegador', click: () => shell.openExternal(link) }, { label: 'Copiar link', click: () => clipboard.writeText(link) }, { type: 'separator' });
+  if (p.isEditable) items.push({ label: 'Recortar', role: 'cut', enabled: p.editFlags.canCut }, { label: 'Copiar', role: 'copy', enabled: p.editFlags.canCopy }, { label: 'Colar', role: 'paste', enabled: p.editFlags.canPaste }, { label: 'Selecionar tudo', role: 'selectAll' });
+  else if (p.selectionText.trim()) items.push({ label: 'Copiar', role: 'copy' });
+  while (items.length && items[items.length - 1].type === 'separator') items.pop();
+  if (items.length) Menu.buildFromTemplate(items).popup({ window: w });
+}
 
 function createWindow() {
   const w = new BrowserWindow({
     width: 1280, height: 820, minWidth: 900, backgroundColor: '#17283b', title: 'Prumo',
     icon: fsSync.existsSync(path.join(__dirname, 'build', 'icon.png')) ? path.join(__dirname, 'build', 'icon.png') : undefined,
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: false, plugins: true }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: false, plugins: true, spellcheck: (state.prefs || {}).spell !== false }
   });
   w.setMenuBarVisibility(false);
-  w.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  w.webContents.on('will-navigate', (e) => e.preventDefault());
+  w.webContents.setWindowOpenHandler(({ url }) => { const x = webUrl(url); if (x) shell.openExternal(x); return { action: 'deny' }; });
+  w.webContents.on('will-navigate', (e, url) => { e.preventDefault(); const x = webUrl(url); if (x) shell.openExternal(x); });
+  w.webContents.on('context-menu', (_e, p) => contextMenu(w, p));
+  // no Windows o corretor usa os idiomas do próprio sistema, sem baixar dicionários
   mainWin = w; w.on('closed', () => { mainWin = null; });
   w.on('focus', () => { if (!w.isDestroyed()) w.webContents.focus(); });
   w.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 app.whenReady().then(() => {
-  loadState(); fixIds();
+  loadState(); fixIds(); pruneHistory(); persist();
+  setTimeout(cleanNoteImages, 15000);
   Menu.setApplicationMenu(null);
   applyBg(); setupUpdater();
   setInterval(checkReminders, 20e3); setTimeout(checkReminders, 3000);

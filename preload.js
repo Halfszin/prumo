@@ -33,5 +33,11 @@ contextBridge.exposeInMainWorld('api', {
   importRules: () => call('rules-import'),
   noteImg: (dataUrl) => call('note-img', dataUrl),
   onOpenCal: (cb) => ipcRenderer.on('open-cal', (_e, k) => cb(k)),
+  openUrl: (u) => call('open-url', u),
+  exportData: () => call('data:export'),
+  openData: () => call('data:open'),
+  openLicenses: () => call('licenses'),
+  wipeData: () => call('data:wipe'),
+  setSpell: (on) => call('spell', on),
   pathOf: (file) => webUtils.getPathForFile(file)
 });
