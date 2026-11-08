@@ -914,14 +914,16 @@ const hashC=n=>PAL[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%PAL.length];
 let colors={};const svc=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>save('colors',colors),400)}})();
 function assignColors(ns){let ch=false;const used=new Set(ns.filter(n=>colors[n]).map(n=>colors[n]));ns.forEach(n=>{if(n&&!colors[n]){colors[n]=PAL.find(c=>!used.has(c))||hashC(n);used.add(colors[n]);ch=true}});if(ch)svc()}
 const color=n=>n===REV?'var(--warn)':colors[n]||hashC(n||'');
-const ownerOf=f=>{const p=f.folder;if(!p)return null;let b=null;for(const [n] of [...FIX,[REV]])if((p===n||p.startsWith(n+'/'))&&(!b||n.length>b.length))b=n;return b};
-function setRules(r){rules=r;const ns=[...new Set(r.map(x=>x.folder))];assignColors(ns);FIX=ns.map(n=>[n,color(n)])}
+let ownC=new Map(),sugC=new Map(),ownCount=new Map();
+const ownerOf=f=>{const p=f.folder;if(!p)return null;if(ownC.has(p))return ownC.get(p);let b=null;for(const [n] of [...FIX,[REV]])if((p===n||p.startsWith(n+'/'))&&(!b||n.length>b.length))b=n;ownC.set(p,b);return b};
+function setRules(r){rules=r;ownC=new Map();sugC=new Map();const ns=[...new Set(r.map(x=>x.folder))];assignColors(ns);FIX=ns.map(n=>[n,color(n)])}
 const ext=n=>n.includes('.')?n.split('.').pop().toLowerCase():'';
 const save=(k,v)=>{try{window.api?api.setState(k,JSON.parse(JSON.stringify(v))):localStorage.setItem('arrumei-'+k,JSON.stringify(v))}catch(e){}};
 const fmt=mb=>mb>=1?(mb>=100?Math.round(mb):mb.toFixed(1))+' MB':Math.round(mb*1000)+' KB';
 const norm=t=>' '+t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[-_.]+/g,' ').trim()+' ';
 const list=t=>t.split(',').map(x=>x.trim()).filter(Boolean);
-function suggest(n){const e=ext(n),nn=norm(n.replace(/\.[^.]*$/,''));
+function suggest(n){const c=sugC.get(n);if(c)return c;const r=suggest0(n);sugC.set(n,r);return r}
+function suggest0(n){const e=ext(n),nn=norm(n.replace(/\.[^.]*$/,''));
   let r=rules.find(r=>list(r.kw).some(k=>{const q=norm(k);return k.length>3?nn.includes(q.trim()):nn.includes(q)}));
   if(!r)r=rules.find(r=>list(r.ext).some(x=>x.toLowerCase().replace('.','')===e));
   return r?{f:r.folder,rule:true}:{f:REV,rule:false}}
@@ -952,8 +954,9 @@ function render(){
   SIDE.forEach(([k])=>{if(!sideOff().includes(k))nm.append(items[k])});
   const gOff=prefs.grpOff||[];$('grp-folders').hidden=gOff.includes('folders');
 const other=f=>f.folder&&!ownerOf(f);
-  if(!gOff.includes('folders')){FIX.forEach(([n,c])=>nc.append(navBtn('f:'+n,n,c,files.filter(f=>ownerOf(f)===n).length)));
-  nc.append(navBtn('f:'+REV,REV,'var(--warn)',files.filter(f=>ownerOf(f)===REV).length),navBtn('f:__outros','Outros','var(--c-zip)',files.filter(other).length))}
+  const oc=new Map();let nOut=0;files.forEach(f=>{const o=ownerOf(f);if(o)oc.set(o,(oc.get(o)||0)+1);else if(f.folder)nOut++});ownCount=oc;
+  if(!gOff.includes('folders')){FIX.forEach(([n,c])=>nc.append(navBtn('f:'+n,n,c,oc.get(n)||0)));
+  nc.append(navBtn('f:'+REV,REV,'var(--warn)',oc.get(REV)||0),navBtn('f:__outros','Outros','var(--c-zip)',nOut))}
   if(!gOff.includes('tags')){const g=document.createElement('div');g.className='group';g.innerHTML='<span>Etiquetas</span><button title="Gerenciar etiquetas" aria-label="Gerenciar etiquetas">+</button>';g.querySelector('button').onclick=()=>openTags([]);nc.append(g);
    tagdefs.forEach(t=>nc.append(navBtn('t:'+t.n,t.n,null,files.filter(f=>tagsOf(f).includes(t.n)).length,`<i class="tdot" style="background:${t.c}"></i>`)))}
   const total=files.reduce((a,f)=>a+f.mb,0)||1;
@@ -982,7 +985,7 @@ const other=f=>f.folder&&!ownerOf(f);
   const card=f=>`<article class="file${S(f)}" tabindex="0" role="button" data-id="${f.id}" aria-label="Selecionar ${esc(f.name)}">${ck(f)}<button class="more" data-more="${f.id}" aria-label="Renomear ou mover">⋯</button>${starB(f)}<div class="thumb" style="--c:${col(f)}"><span class="ti">${esc(ext(f.name).slice(0,4).toUpperCase()||'ARQ')}</span></div><h3 title="${esc(f.name)}">${esc(f.name)}</h3><div class="meta">${fmt(f.mb)} · ${fmtRel(f.mtime)}</div>${chips(f)}${snip(f)}<span class="tag ${f.folder?'ok':''}">${f.folder?esc(f.folder):'Solto'}</span></article>`;
   const row=f=>`<tr tabindex="0" data-id="${f.id}" class="${S(f)}"><td class="ckc">${ck(f)}</td><td><div class="nm"><i style="background:${col(f)}"></i><span class="nmt">${esc(f.name)}</span>${chips(f)}${starB(f)}</div>${snip(f)}</td><td>${esc(typeName(f.name))}</td><td class="num">${fmt(f.mb)}</td><td>${fmtRel(f.mtime)}</td><td><span class="tag${f.folder?' ok':''}">${f.folder?esc(f.folder):'Solto'}</span></td></tr>`;
   g.innerHTML=!list.length?`<div class="empty">${window.api&&!root?'Nenhuma pasta aberta.<br><br><button class="btn p" id="empty-open">Abrir pasta</button>':'Nenhum arquivo por aqui.'}</div>`:mode==='details'?`<table class="tbl"><thead><tr><th class="ckc"></th>${th('name','Nome')}${th('type','Tipo')}${th('mb','Tamanho','num')}${th('mtime','Modificado')}${th('folder','Pasta')}</tr></thead><tbody>${shown.map(row).join('')}</tbody></table>`:shown.map(card).join('');
-  $('fcards').innerHTML=FIX.map(([n,c])=>[n,c,files.filter(f=>ownerOf(f)===n).length]).filter(x=>x[2]).sort((a,b)=>b[2]-a[2]).slice(0,4).map(([n,c,k])=>`<button class="fc" data-f="${esc(n)}"><i style="--c:${c}">${catIc(n)}</i><span><b>${esc(n)}</b><small>${k} ${k===1?'arquivo':'arquivos'}</small></span><em>›</em></button>`).join('');
+  $('fcards').innerHTML=FIX.map(([n,c])=>[n,c,ownCount.get(n)||0]).filter(x=>x[2]).sort((a,b)=>b[2]-a[2]).slice(0,4).map(([n,c,k])=>`<button class="fc" data-f="${esc(n)}"><i style="--c:${c}">${catIc(n)}</i><span><b>${esc(n)}</b><small>${k} ${k===1?'arquivo':'arquivos'}</small></span><em>›</em></button>`).join('');
   $('tabs').innerHTML=[['all','Todos os arquivos',files.length],['pend','Para organizar',pend],['fav','Favoritos',files.filter(isFav).length],['dup','Duplicados',dups?dupStats().n:'…'],['old','Antigos',files.filter(isOld).length]].map(([v,l,n])=>`<button data-v="${v}" aria-current="${view===v}">${l}<span>${n}</span></button>`).join('');
   $('sel-n').textContent=sel.size?`${sel.size} ${sel.size===1?'selecionado':'selecionados'} / ${list.length} arquivos`:`${list.length} ${list.length===1?'arquivo':'arquivos'}`;
   $('sel-acts').hidden=!sel.size;$('ck-all').checked=shown.length>0&&shown.every(f=>sel.has(f.id));$('ck-all').indeterminate=sel.size>0&&!$('ck-all').checked;
@@ -1353,7 +1356,7 @@ $('sel-tag').onclick=()=>openTags(files.filter(f=>sel.has(f.id)));
 // busca no conteúdo
 const SRCH=new Set(['pdf','docx','xlsx','txt','md','csv','json','xml','log','html','ini','yml','yaml']);let sq=0,sT;
 function runSearch(){clearTimeout(sT);hits=new Map();searching=false;if(!qct||query.length<2||!window.api||!root)return;searching=true;const my=++sq,q=query;
-  sT=setTimeout(async()=>{let r=[];try{r=await api.search(q,files.filter(f=>SRCH.has(ext(f.name))).map(f=>f.path))}catch(e){}if(my!==sq)return;hits=new Map(r.map(x=>[x.path,x.snip]));searching=false;render()},350)}
+  sT=setTimeout(async()=>{let r=[];try{r=await api.search(q,files.filter(f=>SRCH.has(ext(f.name))).map(f=>f.path))}catch(e){}if(my!==sq||!r)return;hits=new Map(r.map(x=>[x.path,x.snip]));searching=false;render()},350)}
 function setQct(on){qct=on;$('q-ct').setAttribute('aria-pressed',on);prefs.qct=on;savePrefs();runSearch();render()}
 $('q-ct').onclick=e=>{e.preventDefault();setQct(!qct);$('q').focus()};
 

@@ -63,11 +63,14 @@ async function textOf(p) {
   return t;
 }
 const fold = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-async function searchContent(q, paths) {
+// stop(): devolve true quando uma busca mais nova chegou; aí esta para no próximo arquivo
+async function searchContent(q, paths, stop) {
   const nq = fold(String(q).trim());
   const out = [];
   if (nq.length < 2) return out;
   for (const p of paths) {
+    await new Promise((r) => setImmediate(r)); // deixa chegar o pedido de cancelamento
+    if (stop && stop()) return null;
     const t = await textOf(p).catch(() => '');
     const i = fold(t).indexOf(nq);
     if (i >= 0) out.push({ path: p, snip: t.slice(Math.max(0, i - 40), i + nq.length + 60).replace(/\s+/g, ' ').trim() });

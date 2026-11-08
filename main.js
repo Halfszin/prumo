@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Tray, Notification, nativeImage } = require('electron');
 const { moveOne } = require('./fsops');
-const { readNfe, hashFile, searchContent } = require('./extras');
+const { readNfe, hashFile } = require('./extras');
+const { Worker } = require('worker_threads');
 const crypto = require('crypto');
 const { createWatcher } = require('./background');
 const path = require('path');
@@ -170,7 +171,22 @@ ipcMain.handle('hash', async (_e, paths) => {
   for (const p of (paths || []).filter(insideRoot)) { try { out[p] = await hashFile(p); } catch {} }
   return out;
 });
-ipcMain.handle('search', (_e, q, paths) => searchContent(q, (paths || []).filter(insideRoot)));
+// busca no conteúdo num worker: ler PDF/Word/Excel no processo principal travava a janela
+let sWorker = null, sId = 0;
+const sWait = new Map();
+function searchWorker() {
+  if (sWorker) return sWorker;
+  sWorker = new Worker(path.join(__dirname, 'search-worker.js'));
+  sWorker.on('message', ({ id, r }) => { const f = sWait.get(id); if (f) { sWait.delete(id); f(r); } });
+  const reset = () => { for (const f of sWait.values()) f([]); sWait.clear(); sWorker = null; };
+  sWorker.on('error', reset); sWorker.on('exit', reset);
+  return sWorker;
+}
+ipcMain.handle('search', (_e, q, paths) => new Promise((res) => {
+  for (const [k, f] of sWait) { f(null); sWait.delete(k); } // a busca anterior perde a vez
+  const id = ++sId; sWait.set(id, res);
+  searchWorker().postMessage({ id, q, paths: (paths || []).filter(insideRoot) });
+}));
 // regras em arquivo, para levar a outro computador
 const cleanRules = (r) => (Array.isArray(r) ? r : []).filter((x) => x && typeof x.folder === 'string' && x.folder.trim()).slice(0, 200)
   .map((x) => ({ folder: x.folder.trim().slice(0, 200), kw: String(x.kw || '').slice(0, 500), ext: String(x.ext || '').slice(0, 500), auto: !!x.auto }));

@@ -5,11 +5,13 @@ Use este arquivo para continuar em uma conversa nova. Envie também o `prumo.zip
 ## O que é
 Organizador de arquivos open source (MIT) para Windows, em Electron. Lê uma pasta (ex.: Downloads), mostra um **plano** (arquivo -> pasta) e só move depois de confirmar. Tem **Desfazer**, regras editáveis, pré-visualização e quadro kanban. Nome sempre "Prumo", com P maiúsculo e na fonte Pacifico; o restante em Inter. Frase: "Seus arquivos, no prumo."
 
-## Versão atual: 0.12.1
+## Versão atual: 0.12.2
 **Regra do usuário: sempre entregar juntos o `prumo.zip` e o instalador `.exe` (com `latest.yml` e `.blockmap`).** O .exe tem ~100 MB e o app do usuário não baixa arquivo desse tamanho: entregar também dividido em partes de 30 MB (`split -b 30m -d -a 1`, renomeadas `.bin`) com um `juntar.bat` (`copy /b parte0+parte1+... Prumo-Setup-X.exe`).
 **Usuário pediu: trabalhar só no app; não atualizar a landing page por enquanto.**
 
 **GitHub: https://github.com/Halfszin/prumo (público).** Esta sessão do Claude não pode criar releases nem enviar tags, então a publicação é pelo GitHub Actions (`.github/workflows/instalador.yml`): roda em `windows-latest`, faz `npm ci`, `node test-extras.js` e `electron-builder --win --publish always`, criando a release `vX.Y.Z` com o .exe, `latest.yml` e `.blockmap`. Para publicar uma versão nova: subir a versão no `package.json`, fazer push na `main` e disparar o workflow (`gh api -X POST repos/Halfszin/prumo/actions/workflows/instalador.yml/dispatches -f ref=main`) ou o botão "Run workflow" no GitHub. Link do instalador: https://github.com/Halfszin/prumo/releases/latest. A atualização automática usa por padrão `https://github.com/Halfszin/prumo/releases/latest/download` (`UPDATE_URL` no `main.js`).
+
+Novidades da 0.12.2 (travadas na busca): (1) a busca no conteúdo saiu do processo principal para um worker (`search-worker.js`, worker_threads); antes, ler PDFs grandes deixava o app sem responder 250-400 ms seguidos (medido com 25 PDFs de 60 páginas: pior resposta 402 ms -> 4 ms). Cada busca nova cancela a anterior (`searchContent(q, paths, stop)`). Testado também no app empacotado (asar). (2) A lista ficou ~5x mais rápida ao digitar: as contas de pasta por arquivo (`ownerOf`) e as sugestões de regra (`suggest`) ficam em memória (`ownC`, `sugC`, zeradas em `setRules`) e as contagens da barra lateral saem de uma passada só (900 arquivos: 33 -> 6 ms por letra; 5.000: 150 -> 11 ms).
 
 Novidades da 0.12.1: nota **Guia do Prumo** (id `guia-prumo`) fixada por padrão, com todas as funções em 13 seções, atalhos e tarefas "experimente". Entra sozinha para novos e antigos usuários quando `GUIDE_VER` muda (`ensureGuide`; `prefs.guideV`); se o usuário apagar, não volta até a próxima versão do guia, ou pelo botão Configurações > Sobre > "Ver o guia do Prumo". Novos usuários não recebem mais a nota "Bem-vindo às Notas" (o guia cobre os atalhos). Ao mudar funções do app, atualizar o texto em `GUIDE_HTML` e subir `GUIDE_VER`.
 
@@ -83,6 +85,7 @@ Novidades desta versão: botão **Atualizar** (F5 e releitura ao voltar para a j
 - `main.js` processo principal: janela, bandeja, IPC, atualização, estado salvo em `%APPDATA%\Prumo\prumo.json`.
 - `fsops.js` mover arquivo sem sobrescrever e com nomes seguros para o Windows.
 - `PRIVACIDADE.md`, `TERMOS.md`, `THIRD_PARTY_LICENSES.txt` (gerar de novo com `node scripts/licencas.js <pasta LICENSE Inter> <pasta LICENSE Pacifico>` quando mudar dependências).
+- `search-worker.js` roda a busca no conteúdo fora do processo principal.
 - `extras.js` NF-e, hash de duplicados e texto de PDF/Word/Excel (sem Electron). Autoteste: `test-extras.js`.
 - `background.js` vigia a pasta e organiza só o que é seguro (ver abaixo). Testado com script Node.
 - `preload.js` ponte segura entre tela e processo principal.
