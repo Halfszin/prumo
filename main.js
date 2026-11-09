@@ -318,9 +318,29 @@ function setupUpdater() {
   try { updater().checkForUpdates().catch(() => {}); } catch {}
 }
 ipcMain.handle('update:state', () => readyUpdate);
-ipcMain.handle('update:status', () => updInfo);
+ipcMain.handle('update:status', () => (updFailed ? { ...updInfo, failed: updFailed.version } : updInfo));
 // silencioso (sem as telas do instalador) e abre o Prumo de novo ao terminar
-ipcMain.handle('update:install', () => { try { require('electron-updater').autoUpdater.quitAndInstall(true, true); } catch {} });
+// O instalador silencioso desiste sem avisar se o Prumo não fecha a tempo; por isso encerra tudo antes,
+// avisa que vai reabrir e anota a tentativa para perceber, na próxima abertura, se não deu certo.
+let updFailed = null;
+ipcMain.handle('update:install', (_e, silent = true) => {
+  try {
+    state.updPending = { version: readyUpdate && readyUpdate.version, from: app.getVersion(), time: Date.now(), silent: !!silent }; persist();
+    updLog('INFO')(`instalar ${state.updPending.version} (silencioso: ${!!silent})`);
+    if (silent) new Notification({ title: 'Atualizando o Prumo', body: 'Leva alguns segundos. O Prumo abre sozinho quando terminar; não precisa abrir de novo.' }).show();
+    watcher.stop();
+    if (tray) { tray.destroy(); tray = null; }
+    if (sWorker) sWorker.terminate();
+    setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(!!silent, true), 400);
+  } catch (e) { updLog('ERRO')('instalar: ' + e.message); }
+});
+function checkPendingUpdate() {
+  const p = state.updPending;
+  if (!p) return;
+  delete state.updPending; persist();
+  if (p.version && p.version !== app.getVersion() && Date.now() - p.time < 3600e3) { updFailed = p; updLog('ERRO')(`a atualização para ${p.version} não terminou; continua na ${app.getVersion()}`); }
+  else updLog('INFO')(`atualizado de ${p.from} para ${app.getVersion()}`);
+}
 ipcMain.handle('update:check', async () => {
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
   if (updInfo.phase === 'downloading') return `Baixando a versão ${updInfo.version}… ${updInfo.percent || 0}%`;
@@ -400,7 +420,7 @@ function createWindow() {
   w.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 app.whenReady().then(() => {
-  loadState(); fixIds(); pruneHistory(); persist();
+  loadState(); fixIds(); pruneHistory(); checkPendingUpdate(); persist();
   setTimeout(cleanNoteImages, 15000);
   Menu.setApplicationMenu(null);
   applyBg(); setupUpdater();

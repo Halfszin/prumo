@@ -1281,15 +1281,17 @@ $('refresh').onclick=()=>refresh(false);
 addEventListener('focus',()=>{if(Date.now()-lastRef>3000)refresh(true)});
 // atualização: tudo em Configurações > Sobre e atualizações; um ponto na engrenagem avisa quando há versão pronta
 let updWas='';
-function updUI(p){if(!p)return;const st=$('u-st'),hd=$('u-head'),pr=$('u-prog'),ins=$('u-install');
+let updFail=null;
+function updUI(p){if(!p)return;if(p.failed&&!updFail){updFail=p.failed;toast('A atualização para '+updFail+' não terminou. Veja em Configurações > Sobre e atualizações')}const st=$('u-st'),hd=$('u-head'),pr=$('u-prog'),ins=$('u-install');ins.textContent=updFail?'Instalar com o instalador':'Reiniciar e atualizar';
   pr.hidden=p.phase!=='downloading';ins.hidden=p.phase!=='ready';$('set-btn').classList.toggle('has-upd',p.phase==='ready');
   if(p.phase==='downloading'){hd.textContent=`Baixando a versão ${p.version||'nova'}… ${p.percent||0}%`;pr.style.setProperty('--pct',(p.percent||0)+'%');st.textContent=(p.total?`${fmt(p.done/1048576)} de ${fmt(p.total/1048576)}. `:'')+'Pode continuar usando o Prumo normalmente.'}
+  else if(p.phase==='ready'&&updFail){hd.textContent=`A atualização para ${p.version} não terminou`;st.textContent='Na última tentativa o Prumo não foi atualizado. Clique em Instalar com o instalador: as telas de instalação vão aparecer e é só seguir.'}
   else if(p.phase==='ready'){hd.textContent=`Versão ${p.version} pronta`;st.textContent=upd.auto===false?'Clique em Reiniciar e atualizar. Leva poucos segundos e não abre nenhuma tela de instalação.':'Será instalada sozinha quando você fechar o Prumo. Ou clique em Reiniciar e atualizar agora.';if(updWas!=='ready')toast('Versão '+p.version+' pronta. Veja em Configurações > Sobre e atualizações')}
   else if(p.phase==='error'){hd.textContent='Não deu para atualizar';st.textContent=p.message+'. Tente de novo em Verificar agora.'}
   else if(p.phase==='checking'){hd.textContent='Procurando versão nova…';st.textContent=''}
   else if(p.phase==='latest'){hd.textContent='Você está na versão mais recente';st.textContent='O Prumo procura versões novas sozinho a cada poucas horas.'}
   updWas=p.phase}
-$('u-install').onclick=()=>{if(window.api){$('u-head').textContent='Reiniciando para atualizar…';api.installUpdate()}};
+$('u-install').onclick=()=>{if(!window.api)return;$('u-head').textContent=updFail?'Abrindo o instalador…':'Reiniciando para atualizar… o Prumo abre sozinho em alguns segundos';api.installUpdate(!updFail)};
 $('u-auto').onclick=()=>{upd.auto=upd.auto===false;save('update',upd);$('u-auto').setAttribute('aria-checked',upd.auto!==false)};
 $('bg-seg').onclick=async()=>{if(!window.api){toast('Disponível no programa instalado');return}bg.on=!bg.on;
   if(bg.on&&!rules.some(r=>r.auto)&&await askC('Organizar quais arquivos?','Nenhuma regra está marcada para organizar sozinha. Quer marcar todas? Você pode desmarcar uma por uma depois.','Marcar todas'))setAllAuto(true);
