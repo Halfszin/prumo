@@ -670,7 +670,8 @@ main>.enter{animation:pagein .36s cubic-bezier(.16,1,.3,1)}
 button.mo{border:0;background:none;padding:4px 0 0;font:inherit;color:inherit;cursor:pointer;border-radius:8px}
 button.mo:disabled{cursor:default}
 button.mo:not(:disabled):hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
-button.mo:not(:disabled):hover i{filter:brightness(1.25)}
+button.mo:not(:disabled):hover i{background:var(--accent)}
+button.mo:not(:disabled):hover b,button.mo:not(:disabled):hover small{color:var(--accent-text)}
 
 #upd-old.dl{background:linear-gradient(90deg,var(--accent) var(--pct,0%),color-mix(in srgb,var(--accent) 35%,var(--card)) var(--pct,0%));opacity:1;cursor:default;font-variant-numeric:tabular-nums}
 
