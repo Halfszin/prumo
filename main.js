@@ -294,7 +294,7 @@ const updLog = (lvl) => (m) => {
 function updater() {
   const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   const { autoUpdater } = require('electron-updater');
-  // instala em silêncio ao fechar (como o Discord), a menos que o usuário desligue
+  // instala em silêncio ao fechar, a menos que o usuário desligue
   autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = (state.update || {}).auto !== false;
   autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
   if (!updaterOn) {

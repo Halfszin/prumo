@@ -5,11 +5,13 @@ Use este arquivo para continuar em uma conversa nova. Envie também o `prumo.zip
 ## O que é
 Organizador de arquivos open source (MIT) para Windows, em Electron. Lê uma pasta (ex.: Downloads), mostra um **plano** (arquivo -> pasta) e só move depois de confirmar. Tem **Desfazer**, regras editáveis, pré-visualização e quadro kanban. Nome sempre "Prumo", com P maiúsculo e na fonte Pacifico; o restante em Inter. Frase: "Seus arquivos, no prumo."
 
-## Versão atual: 0.12.5
+## Versão atual: 0.12.6
 **Regra do usuário: sempre entregar juntos o `prumo.zip` e o instalador `.exe` (com `latest.yml` e `.blockmap`).** O .exe tem ~100 MB e o app do usuário não baixa arquivo desse tamanho: entregar também dividido em partes de 30 MB (`split -b 30m -d -a 1`, renomeadas `.bin`) com um `juntar.bat` (`copy /b parte0+parte1+... Prumo-Setup-X.exe`).
 **Usuário pediu: trabalhar só no app; não atualizar a landing page por enquanto.**
 
 **GitHub: https://github.com/Halfszin/prumo (público).** Esta sessão do Claude não pode criar releases nem enviar tags, então a publicação é pelo GitHub Actions (`.github/workflows/instalador.yml`): roda em `windows-latest`, faz `npm ci`, `node test-extras.js` e `electron-builder --win --publish always`, criando a release `vX.Y.Z` com o .exe, `latest.yml` e `.blockmap`. Para publicar uma versão nova: subir a versão no `package.json`, fazer push na `main` e disparar o workflow (`gh api -X POST repos/Halfszin/prumo/actions/workflows/instalador.yml/dispatches -f ref=main`) ou o botão "Run workflow" no GitHub. Link do instalador: https://github.com/Halfszin/prumo/releases/latest. A atualização automática usa por padrão `https://github.com/Halfszin/prumo/releases/latest/download` (`UPDATE_URL` no `main.js`).
+
+Novidades da 0.12.6: tirada a comparação com outro app no texto de "Instalar sozinho ao fechar" (o usuário não quer citar outros produtos).
 
 Novidades da 0.12.5: no tema claro, passar o mouse numa barra de Atividade por mês deixava a barra quase branca (filtro brightness sobre roxo claro). Agora a barra fica roxa forte e o número/mês em roxo, nos dois temas.
 
@@ -33,7 +35,7 @@ Novidades da 0.12.0:
 
 Novidades da 0.11.5: a lista de notas piscava a cada letra (era refeita inteira e a animação de entrada rodava de novo). Agora a digitação só atualiza o item aberto (`noteTouch`); a lista só é refeita quando a ordem muda, e a animação só roda ao abrir a tela de Notas (`#n-items.anim`).
 
-Novidades da 0.11.4: o botão de atualizar saiu do alto da tela e foi para Configurações > Sobre e atualizações (barra de progresso, "Reiniciar e atualizar", ponto na engrenagem quando há versão pronta, endereço em "Avançado"). Atualização igual ao Discord: `quitAndInstall(true, true)` instala em silêncio e reabre; opção "Instalar sozinho ao fechar" (`update.auto`, padrão ligado; controla `autoInstallOnAppQuit`). Certificado (SmartScreen): opções pesquisadas e passadas ao usuário: SignPath Foundation (grátis para open source), Certum Open Source (~€49-69/ano), Microsoft Store (grátis para pessoa física, sem SmartScreen); Azure Artifact Signing só para pessoa física nos EUA/Canadá.
+Novidades da 0.11.4: o botão de atualizar saiu do alto da tela e foi para Configurações > Sobre e atualizações (barra de progresso, "Reiniciar e atualizar", ponto na engrenagem quando há versão pronta, endereço em "Avançado"). Atualização silenciosa: `quitAndInstall(true, true)` instala em silêncio e reabre; opção "Instalar sozinho ao fechar" (`update.auto`, padrão ligado; controla `autoInstallOnAppQuit`). Certificado (SmartScreen): opções pesquisadas e passadas ao usuário: SignPath Foundation (grátis para open source), Certum Open Source (~€49-69/ano), Microsoft Store (grátis para pessoa física, sem SmartScreen); Azure Artifact Signing só para pessoa física nos EUA/Canadá.
 
 Novidades da 0.11.3: Ctrl+Z / Ctrl+Y (e Ctrl+Shift+Z) nas Notas com pilha própria (`nh`, `histPush`, `histGo`): agrupa a digitação (600 ms) e cada Enter, botão da barra, imagem e tarefa marcada vira um passo; zera ao trocar de nota.
 
