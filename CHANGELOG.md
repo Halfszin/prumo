@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.12.8
+- Corrigido: o botão Abrir da pré-visualização abria a pasta de dados do Prumo em vez do arquivo.
+
 ## 0.12.7
 - "Instalar sozinho ao fechar" agora funciona também com a organização automática ligada (quando o Prumo fica na bandeja): ao fechar a janela, a versão nova é instalada em silêncio e o Prumo volta para a bandeja.
 - Sair pela bandeja também instala a versão pronta.

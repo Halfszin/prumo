@@ -7,7 +7,7 @@ Precisa do Node.js 18 ou mais novo.
 ```
 npm install
 npm start      # abre o app
-npm test       # teste das funções de NF-e, duplicados e busca
+npm test       # testes de NF-e, duplicados, busca e ids repetidos na tela
 ```
 
 ## Estrutura
@@ -44,6 +44,10 @@ Para gerar o instalador no próprio computador: `npm run dist` (no Windows, com 
 - Ao mudar as dependências, gere de novo o `THIRD_PARTY_LICENSES.txt` com `node scripts/licencas.js <pasta com a LICENSE da Inter> <pasta com a LICENSE da Pacifico>`.
 - Ao mudar a política de privacidade, suba `PRIV_VER` para o aviso aparecer de novo.
 - Cores: use os tokens (`--accent-text` para texto roxo, `--danger` para vermelho); o contraste foi conferido para WCAG AA nos dois temas.
+
+## Ideias
+
+Próximos passos e o plano do app para Android: [IDEIAS.md](IDEIAS.md).
 
 ## Ainda não testado em Windows real
 
