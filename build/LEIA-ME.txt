@@ -1,4 +1,0 @@
-Coloque aqui o seu logo:
-- icon.png (512x512): icone da janela e da barra de tarefas
-- icon.ico (256x256): icone do .exe e do instalador
-Em renderer/ coloque logo.png (ou SVG convertido) para aparecer no canto da barra lateral.

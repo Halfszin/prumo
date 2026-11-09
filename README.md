@@ -1,46 +1,40 @@
 # Prumo
 
-Organizador de arquivos open source (MIT) para Windows.
+Organizador de arquivos para Windows, gratuito e de código aberto. O Prumo arruma pastas bagunçadas, como a Downloads, por regras que você lê e edita, mostra o plano antes de mover qualquer arquivo e desfaz tudo se você mudar de ideia.
 
-## Recursos
-- Abre uma pasta, lê os arquivos (inclusive subpastas) e mostra tudo na tela.
-- **Regras editáveis** (botão Regras): por palavras no nome (nota fiscal, proposta...) e por extensão (Word, Excel...). Ficam salvas em `%APPDATA%\Prumo\prumo.json`. Dá para **exportar e importar** as regras em um arquivo.
-- **Plano de confirmação**: antes de mover, mostra arquivo → pasta. Nada acontece sem você confirmar.
-- **Histórico** com as últimas 200 ações (organizar, renomear, NF-e, arquivar): desfaz tudo ou arquivo por arquivo.
-- **Pasta Revisar** para o que não casa com nenhuma regra.
-- **Favoritos e etiquetas** coloridas, com atalhos na barra lateral.
-- **Renomear em lote** com padrão (`{nome}`, `{n}`, `{data}`, `{pasta}`), procurar e trocar, maiúsculas e prévia.
-- **NF-e (XML)**: lê fornecedor, número e data e guarda em `Notas fiscais/Fornecedor/Ano/Mês`, levando junto o PDF (DANFE) com a mesma chave.
-- **Duplicados** (mesmo conteúdo) e **arquivos antigos** (sem abrir há mais de 1 ano), com arquivar ou excluir em lote.
-- **Busca no conteúdo** de PDF, Word, Excel e textos.
-- **Notas** com texto rico, tarefas, atalhos de Markdown e imagens no meio do texto.
-- **Calendário** com lembretes que se repetem e aviso do Windows na hora; cartões do Quadro com data e cor aparecem no calendário.
-- **Notas com links** entre elas (`[[`) e para páginas da web, ordem que você escolher e corretor ortográfico offline.
-- **Privacidade**: não coleta nenhum dado. Veja [PRIVACIDADE.md](PRIVACIDADE.md) e [TERMOS.md](TERMOS.md).
-- Tecla **Delete** exclui (vai para a Lixeira, com confirmação).
-- Renomear e escolher pasta por arquivo, com opção de local livre (pasta relativa ou caminho completo como `D:\Financeiro`).
-- Nomes inválidos do Windows são corrigidos; arquivos nunca são sobrescritos (`nome (1).ext`); arquivos em uso são pulados e avisados.
-- Visualização em Grade, Lista ou **Detalhes** (colunas ordenáveis, como no Explorer).
-- Clique no arquivo para **pré-visualizar** (imagens, PDF, texto, Word e Excel); duplo clique abre no programa padrão.
-- Mostrar no Explorer, abrir arquivo, arrastar arquivos do Explorer, quadro kanban salvo.
+**[Baixar o instalador](https://github.com/Halfszin/prumo/releases/latest)**
 
-## Rodar
-Precisa do Node.js 18+.
+## O que ele faz
 
-    npm install
-    npm start
+**Organizar**
+- Regras por palavras no nome e por extensão, com uma pasta **Revisar** para o que não casa com nenhuma.
+- Plano de confirmação: nada é movido antes de você aprovar, e nada é sobrescrito.
+- Histórico com desfazer de tudo ou de cada arquivo.
+- Organização automática dos arquivos novos que chegarem na pasta.
+- Renomear em lote, favoritos, etiquetas e leitura de NF-e (XML) por fornecedor, ano e mês.
+- Duplicados, arquivos antigos e busca dentro de PDF, Word e Excel.
 
-Autoteste das funções sem tela (NF-e, duplicados, busca): `node test-extras.js`.
+**Acompanhar**
+- Dashboard com o resumo da pasta.
+- Calendário com lembretes que se repetem e avisos do Windows.
+- Quadro de tarefas com datas e cores.
 
-## Instalador do Windows
-    npm run dist
+**Anotar**
+- Notas com títulos, listas, tarefas, imagens, links entre notas e para páginas da web, busca com Ctrl+F e corretor ortográfico.
 
-Gera `dist/Prumo-Setup-0.10.0.exe`, `latest.yml` e o `.blockmap`. No Windows, ligue o Modo Desenvolvedor (ou use o terminal como administrador) para o ícone ir para o .exe. Sem assinatura digital, o Windows pode mostrar o aviso do SmartScreen na instalação (Mais informações > Executar assim mesmo).
+## Privacidade
 
-## Logo
-- `build/icon.ico` e `build/icon.png`: ícone do instalador e da janela.
+O Prumo não coleta nenhum dado e não usa cookies: tudo fica no seu computador. A única conexão com a internet é a procura de atualizações, que pode ser desligada. Veja a [Política de Privacidade](PRIVACIDADE.md) e os [Termos de Uso](TERMOS.md).
 
-## Novidades da 0.6
-- Configurações > Organização: subpastas por ano ou ano e mês (liga e desliga).
-- Menu de clique direito nos arquivos e tela de boas-vindas.
-- Fontes embutidas (Inter e Pacifico para o nome): o app não precisa de internet.
+## Desenvolvimento
+
+```
+npm install
+npm start
+```
+
+Estrutura do projeto, testes e como publicar versões: [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md). Mudanças de cada versão: [CHANGELOG.md](CHANGELOG.md).
+
+## Licença
+
+[MIT](LICENSE). Componentes de terceiros: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt).

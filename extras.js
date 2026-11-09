@@ -1,4 +1,4 @@
-// Funções sem Electron: NF-e, duplicados, texto de documentos. Testadas em test-extras.js.
+// Funções sem Electron: NF-e, duplicados, texto de documentos. Testadas em test/extras.test.js.
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
