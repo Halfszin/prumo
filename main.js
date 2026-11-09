@@ -9,6 +9,7 @@ const fs = require('fs/promises');
 const fsSync = require('fs');
 
 if (!app.requestSingleInstanceLock()) app.quit();
+if (process.env.PRUMO_TEST) global.prumoRequire = require; // só para testes automáticos
 app.setAppUserModelId('org.prumo.app');
 
 // ---- configuração salva em %APPDATA%\Prumo\prumo.json ----
@@ -295,7 +296,7 @@ function updater() {
   const u = { ...state.update, url: (state.update || {}).url || UPDATE_URL };
   const { autoUpdater } = require('electron-updater');
   // instala em silêncio ao fechar, a menos que o usuário desligue
-  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = (state.update || {}).auto !== false;
+  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = false; // ver installUpdate e window-all-closed
   autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
   if (!updaterOn) {
     updaterOn = true;
@@ -323,20 +324,29 @@ ipcMain.handle('update:status', () => (updFailed ? { ...updInfo, failed: updFail
 // O instalador silencioso desiste sem avisar se o Prumo não fecha a tempo; por isso encerra tudo antes,
 // avisa que vai reabrir e anota a tentativa para perceber, na próxima abertura, se não deu certo.
 let updFailed = null;
-ipcMain.handle('update:install', (_e, silent = true) => {
+// silent: sem as telas do instalador; run: abrir o Prumo depois; hidden: reabrir só na bandeja (atualização feita ao fechar)
+let installing = false;
+const autoOn = () => (state.update || {}).auto !== false;
+function installUpdate({ silent = true, run = true, hidden = false } = {}) {
+  if (installing || !readyUpdate) return false;
+  installing = true;
   try {
-    state.updPending = { version: readyUpdate && readyUpdate.version, from: app.getVersion(), time: Date.now(), silent: !!silent }; persist();
-    updLog('INFO')(`instalar ${state.updPending.version} (silencioso: ${!!silent})`);
-    if (silent) new Notification({ title: 'Atualizando o Prumo', body: 'Leva alguns segundos. O Prumo abre sozinho quando terminar; não precisa abrir de novo.' }).show();
+    state.updPending = { version: readyUpdate.version, from: app.getVersion(), time: Date.now(), silent, hidden }; persist();
+    updLog('INFO')(`instalar ${readyUpdate.version} (silencioso: ${silent}, reabrir: ${run}, bandeja: ${hidden})`);
+    if (silent && run && !hidden) new Notification({ title: 'Atualizando o Prumo', body: 'Leva alguns segundos. O Prumo abre sozinho quando terminar; não precisa abrir de novo.' }).show();
     watcher.stop();
     if (tray) { tray.destroy(); tray = null; }
     if (sWorker) sWorker.terminate();
-    setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(!!silent, true), 400);
-  } catch (e) { updLog('ERRO')('instalar: ' + e.message); }
-});
+    setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(silent, run), 400);
+    return true;
+  } catch (e) { installing = false; updLog('ERRO')('instalar: ' + e.message); return false; }
+}
+ipcMain.handle('update:install', (_e, silent = true) => installUpdate({ silent: !!silent, run: true }));
+let reopenHidden = false;
 function checkPendingUpdate() {
   const p = state.updPending;
   if (!p) return;
+  reopenHidden = !!p.hidden;
   delete state.updPending; persist();
   if (p.version && p.version !== app.getVersion() && Date.now() - p.time < 3600e3) { updFailed = p; updLog('ERRO')(`a atualização para ${p.version} não terminou; continua na ${app.getVersion()}`); }
   else updLog('INFO')(`atualizado de ${p.from} para ${app.getVersion()}`);
@@ -425,8 +435,12 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   applyBg(); setupUpdater();
   setInterval(checkReminders, 20e3); setTimeout(checkReminders, 3000);
-  if (!(process.argv.includes('--hidden') && bgc().on)) createWindow();
+  if (!((process.argv.includes('--hidden') || reopenHidden) && bgc().on)) createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });
 app.on('second-instance', showWindow);
-app.on('window-all-closed', () => { if (process.platform !== 'darwin' && !bgc().on) app.quit(); });
+app.on('window-all-closed', () => {
+  if (readyUpdate && autoOn() && installUpdate({ silent: true, run: bgc().on, hidden: true })) return;
+  if (process.platform !== 'darwin' && !bgc().on) app.quit();
+});
+app.on('before-quit', (e) => { if (!installing && readyUpdate && autoOn()) { e.preventDefault(); installUpdate({ silent: true, run: false }); } });

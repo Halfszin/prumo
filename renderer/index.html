@@ -896,7 +896,7 @@ body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!importan
 <section class="sc" id="u-card"><h3>Atualizações</h3>
 <div class="srow"><div><b id="u-head">Atualizado</b><small id="u-st">O <span class="pn">Prumo</span> procura versões novas sozinho a cada poucas horas.</small></div><div class="uacts"><button class="btn s" id="u-check">Verificar agora</button><button class="btn p s" id="u-install" hidden>Reiniciar e atualizar</button></div></div>
 <div class="uprog" id="u-prog" hidden><i></i></div>
-<div class="srow"><div><b>Instalar sozinho ao fechar</b><small>A versão nova é baixada em segundo plano e instalada em silêncio quando você fechar o <span class="pn">Prumo</span>, sem telas de instalação.</small></div><button class="switch" id="u-auto" role="switch" aria-checked="true" aria-label="Instalar sozinho ao fechar"><i></i></button></div>
+<div class="srow"><div><b>Instalar sozinho ao fechar</b><small>A versão nova é baixada em segundo plano e instalada em silêncio quando você fechar a janela do <span class="pn">Prumo</span>, sem telas de instalação.</small></div><button class="switch" id="u-auto" role="switch" aria-checked="true" aria-label="Instalar sozinho ao fechar"><i></i></button></div>
 <details class="uadv"><summary>Avançado</summary><p class="hint">Endereço onde ficam os arquivos da versão mais nova.</p><input type="text" id="u-url" placeholder="Padrão: https://github.com/Halfszin/prumo/releases/latest/download" aria-label="Endereço das atualizações"></details></section>
 <section class="sc"><h3>Onde ficam seus dados</h3><p class="hint" id="a-data"></p><div class="acts" style="justify-content:flex-start"><button class="btn" id="a-guide">Ver o guia do Prumo</button><button class="btn" id="a-welcome">Rever boas-vindas</button></div></section></div>
 </section></div>
@@ -1312,7 +1312,7 @@ $('bg-seg').onclick=async()=>{if(!window.api){toast('Disponível no programa ins
 $('bg-pick').onclick=async()=>{const q=window.api&&await api.pickDir();if(q){bg.folder=q;save('bg',bg);syncSettings()}};
 $('bg-start').onchange=()=>{bg.startup=$('bg-start').checked;save('bg',bg)};
 $('u-url').onchange=()=>{upd.url=$('u-url').value.trim();save('update',upd)};
-$('u-check').onclick=async()=>{if(!window.api){$('u-head').textContent='Funciona no programa instalado';return}$('u-head').textContent='Procurando versão nova…';const r=await api.checkUpdate();if(!['downloading','ready','error'].includes(updWas))$('u-head').textContent=r};
+$('u-check').onclick=async()=>{if(!window.api){$('u-head').textContent='Funciona no programa instalado';return}$('u-head').textContent='Procurando versão nova…';const r=await api.checkUpdate(),st=await api.updateStatus();if(['downloading','ready','error'].includes(st.phase))updUI(st);else $('u-head').textContent=r};
 // ===== 0.10: favoritos, etiquetas, revisar, duplicados, antigos, busca no conteúdo, NF-e, renomear em lote, histórico, quadro com data, lembretes, notas
 let meta={},tagdefs=[],notes=[],recur=[],dups=null,dupBusy=false,hits=new Map(),qct=false,searching=false,webHist=[],planPre=null,planKind=null;
 const DEF_TAGS=[{n:'Importante',c:'#ef4444'},{n:'Trabalho',c:'#3b82f6'},{n:'Pessoal',c:'#22c55e'}];

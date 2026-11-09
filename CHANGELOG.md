@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.12.7
+- "Instalar sozinho ao fechar" agora funciona também com a organização automática ligada (quando o Prumo fica na bandeja): ao fechar a janela, a versão nova é instalada em silêncio e o Prumo volta para a bandeja.
+- Sair pela bandeja também instala a versão pronta.
+- Corrigido o aviso "Procurando versão nova…" que ficava preso depois de Verificar agora.
+
 ## 0.12.6
 - Texto da opção "Instalar sozinho ao fechar" revisado.
 

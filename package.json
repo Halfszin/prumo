@@ -1,6 +1,6 @@
 {
   "name": "prumo",
-  "version": "0.12.6",
+  "version": "0.12.7",
   "description": "Prumo: organizador de arquivos open source para Windows",
   "author": "Halfszin e colaboradores do Prumo",
   "main": "main.js",
