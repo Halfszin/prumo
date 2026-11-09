@@ -19,7 +19,7 @@ if (inter) add('Fonte Inter (embutida na interface)', '4', 'OFL-1.1', fs.readFil
 if (pacifico) add('Fonte Pacifico (nome "Prumo")', '', 'OFL-1.1', fs.readFileSync(path.join(pacifico, 'LICENSE'), 'utf8').trim());
 const head = `Prumo: avisos de componentes de terceiros
 Gerado por scripts/licencas.js. O Chromium, incluído pelo Electron, traz as próprias licenças no arquivo LICENSES.chromium.html, na pasta do programa.
-Ícones: desenhados para o Prumo. Logo: criação do autor do Prumo.
+Ícones: os principais vêm de um pacote de uso livre escolhido pelo autor; os demais e o logo foram criados para o Prumo.
 
 `;
 fs.writeFileSync(path.join(root, 'THIRD_PARTY_LICENSES.txt'), head + parts.join('\n'));

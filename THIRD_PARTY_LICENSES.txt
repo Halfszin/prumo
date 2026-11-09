@@ -1,6 +1,6 @@
 Prumo: avisos de componentes de terceiros
 Gerado por scripts/licencas.js. O Chromium, incluído pelo Electron, traz as próprias licenças no arquivo LICENSES.chromium.html, na pasta do programa.
-Ícones: desenhados para o Prumo. Logo: criação do autor do Prumo.
+Ícones: os principais vêm de um pacote de uso livre escolhido pelo autor; os demais e o logo foram criados para o Prumo.
 
 ==============================================================================
 Electron 33.4.11
