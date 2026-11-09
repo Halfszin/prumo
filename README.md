@@ -38,3 +38,7 @@ Estrutura do projeto, testes e como publicar versões: [docs/DESENVOLVIMENTO.md]
 ## Licença
 
 [MIT](LICENSE). Componentes de terceiros: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt).
+
+## Assinatura de código
+
+O instalador será assinado pelo programa de código aberto da SignPath Foundation (pedido em andamento). Veja a [política de assinatura de código](CODE_SIGNING_POLICY.md).
