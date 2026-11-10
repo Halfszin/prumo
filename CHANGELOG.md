@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.13.5
+- Notas: tamanho das letras por número, como no Word. "Texto" muda só o trecho selecionado; "Nota" muda o tamanho padrão da nota inteira, sem mexer no texto que tem tamanho próprio.
+- Botão da lua: escolha dois tons favoritos em Configurações > Aparência e alterne entre eles com um clique.
+
 ## 0.13.4
 - Instalador sem telas de escolha: instala direto na sua conta do Windows e abre o Prumo no fim. As atualizações passam a instalar sem perguntar nada.
 
