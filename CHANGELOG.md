@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.13.3
+- Notas: a lista e a nota aberta rolam cada uma por conta própria. Nota muito grande não deixa mais a lista de notas cortada ou fora do lugar.
+- Procurar na nota (Ctrl+F) leva direto ao resultado, mesmo em nota grande.
+- Aparência com quatro tons: Cinza claro, Cinza, Escuro e Ônix (além do Automático). O botão da lua alterna entre eles.
+
 ## 0.13.2
 - Atualização: o Prumo abre o instalador ele mesmo. Quando o Windows recusa abrir o instalador sem assinatura ("spawn UNKNOWN" no registro), abre com as telas normais em vez de fechar sem instalar.
 - Download da atualização direto do arquivo inteiro (o GitHub não aceita o download por partes).
