@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.13.4
+- Instalador sem telas de escolha: instala direto na sua conta do Windows e abre o Prumo no fim. As atualizações passam a instalar sem perguntar nada.
+
 ## 0.13.3
 - Notas: a lista e a nota aberta rolam cada uma por conta própria. Nota muito grande não deixa mais a lista de notas cortada ou fora do lugar.
 - Procurar na nota (Ctrl+F) leva direto ao resultado, mesmo em nota grande.
