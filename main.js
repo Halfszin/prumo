@@ -308,7 +308,7 @@ function updater() {
       if (Date.now() - lastProg < 400) return; lastProg = Date.now();
       updSend({ phase: 'downloading', version: updInfo.version, percent: Math.floor(p.percent), done: p.transferred, total: p.total });
     });
-    autoUpdater.on('update-downloaded', (i) => { readyUpdate = { version: i.version }; updSend({ phase: 'ready', version: i.version }); send('update', readyUpdate); });
+    autoUpdater.on('update-downloaded', (i) => { readyUpdate = { version: i.version, file: i.downloadedFile }; updLog('INFO')('instalador baixado em ' + i.downloadedFile); updSend({ phase: 'ready', version: i.version }); send('update', readyUpdate); });
     autoUpdater.on('error', (e) => updSend({ phase: 'error', message: String((e && e.message) || e).split('\n')[0].slice(0, 200) }));
     setInterval(() => { if ((state.update || {}).check !== false) autoUpdater.checkForUpdates().catch(() => {}); }, 4 * 3600e3);
   }
@@ -337,11 +337,19 @@ function installUpdate({ silent = true, run = true, hidden = false } = {}) {
     watcher.stop();
     if (tray) { tray.destroy(); tray = null; }
     if (sWorker) sWorker.terminate();
-    setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(silent, run), 400);
+    const f = readyUpdate.file; let size = -1; try { size = fsSync.statSync(f).size; } catch {}
+    updLog('INFO')(`arquivo do instalador: ${f} (${size} bytes)`);
+    if (!silent && f && size > 0) {
+      // plano B: abre o instalador como um clique duplo no Explorer (o mesmo caminho que funciona instalando à mão)
+      shell.openPath(f).then((err) => { if (err) updLog('ERRO')('não abriu o instalador: ' + err); });
+      setTimeout(() => app.exit(0), 1500);
+    } else setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(silent, run), 400);
     return true;
   } catch (e) { installing = false; updLog('ERRO')('instalar: ' + e.message); return false; }
 }
 ipcMain.handle('update:install', (_e, silent = true) => installUpdate({ silent: !!silent, run: true }));
+ipcMain.handle('update:reveal', () => { if (readyUpdate && readyUpdate.file) shell.showItemInFolder(readyUpdate.file); return !!(readyUpdate && readyUpdate.file); });
+ipcMain.handle('update:log', () => shell.openPath(path.join(app.getPath('userData'), 'update.log')));
 let reopenHidden = false;
 function checkPendingUpdate() {
   const p = state.updPending;

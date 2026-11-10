@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('api', {
   updateStatus: () => call('update:status'),
   onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_e, m) => cb(m)),
   installUpdate: (silent) => call('update:install', silent),
+  revealUpdate: () => call('update:reveal'),
+  openUpdateLog: () => call('update:log'),
   checkUpdate: () => call('update:check'),
   copy: (t) => call('copy', t),
   open: (p) => call('open', p),

@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.13.1
+- "Instalar com o instalador" agora abre o instalador baixado como um clique duplo no Explorer, sem depender do atualizador automático.
+- Quando a atualização não termina: botões para mostrar o instalador baixado e abrir o registro de atualização.
+- Registro de atualização mais detalhado (onde o instalador foi baixado e o tamanho).
+
 ## 0.13.0
 - Quadro: cartão completo com descrição, checklist com progresso, prioridade, data, coluna e cor; botão de excluir na própria janela.
 - Quadro: cada cartão mostra quando foi alterado pela última vez, inclusive ao mudar de coluna, e quando foi criado.

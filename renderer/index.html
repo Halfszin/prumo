@@ -781,6 +781,8 @@ button.mo:not(:disabled):hover b,button.mo:not(:disabled):hover small{color:var(
 #n-items .nsec:first-child{padding-top:2px}
 .nsize{border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;margin-left:4px}
 .nsize:hover{color:var(--ink);border-color:var(--accent)}
+.ufail{margin-top:10px;padding:12px 14px;border-radius:10px;background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.ufail .hint{margin:0}
 body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}
 </style>
 </head>
@@ -948,6 +950,7 @@ body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!importan
 <div data-pane="about" hidden><h2>Sobre e atualizações</h2><p class="hint"><span class="pn">Prumo</span> <span id="a-ver"></span> · código aberto, licença MIT.</p>
 <section class="sc" id="u-card"><h3>Atualizações</h3>
 <div class="srow"><div><b id="u-head">Atualizado</b><small id="u-st">O <span class="pn">Prumo</span> procura versões novas sozinho a cada poucas horas.</small></div><div class="uacts"><button class="btn s" id="u-check">Verificar agora</button><button class="btn p s" id="u-install" hidden>Reiniciar e atualizar</button></div></div>
+<div class="ufail" id="u-fail" hidden><p class="hint">Se o instalador não abrir, use <b>Mostrar o instalador baixado</b> e dê dois cliques nele. Para eu descobrir a causa, me envie o registro de atualização.</p><div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="btn s" id="u-reveal">Mostrar o instalador baixado</button><button class="btn s" id="u-log">Abrir o registro</button></div></div>
 <div class="uprog" id="u-prog" hidden><i></i></div>
 <div class="srow"><div><b>Instalar sozinho ao fechar</b><small>A versão nova é baixada em segundo plano e instalada em silêncio quando você fechar a janela do <span class="pn">Prumo</span>, sem telas de instalação.</small></div><button class="switch" id="u-auto" role="switch" aria-checked="true" aria-label="Instalar sozinho ao fechar"><i></i></button></div>
 <details class="uadv"><summary>Avançado</summary><p class="hint">Endereço onde ficam os arquivos da versão mais nova.</p><input type="text" id="u-url" placeholder="Padrão: https://github.com/Halfszin/prumo/releases/latest/download" aria-label="Endereço das atualizações"></details></section>
@@ -1357,7 +1360,7 @@ addEventListener('focus',()=>{if(Date.now()-lastRef>3000)refresh(true)});
 // atualização: tudo em Configurações > Sobre e atualizações; um ponto na engrenagem avisa quando há versão pronta
 let updWas='';
 let updFail=null;
-function updUI(p){if(!p)return;if(p.failed&&!updFail){updFail=p.failed;toast('A atualização para '+updFail+' não terminou. Veja em Configurações > Sobre e atualizações')}const st=$('u-st'),hd=$('u-head'),pr=$('u-prog'),ins=$('u-install');ins.textContent=updFail?'Instalar com o instalador':'Reiniciar e atualizar';
+function updUI(p){if(!p)return;if(p.failed&&!updFail){updFail=p.failed;toast('A atualização para '+updFail+' não terminou. Veja em Configurações > Sobre e atualizações')}const st=$('u-st'),hd=$('u-head'),pr=$('u-prog'),ins=$('u-install');ins.textContent=updFail?'Instalar com o instalador':'Reiniciar e atualizar';$('u-fail').hidden=!updFail;
   pr.hidden=p.phase!=='downloading';ins.hidden=p.phase!=='ready';$('set-btn').classList.toggle('has-upd',p.phase==='ready');
   if(p.phase==='downloading'){hd.textContent=`Baixando a versão ${p.version||'nova'}… ${p.percent||0}%`;pr.style.setProperty('--pct',(p.percent||0)+'%');st.textContent=(p.total?`${fmt(p.done/1048576)} de ${fmt(p.total/1048576)}. `:'')+'Pode continuar usando o Prumo normalmente.'}
   else if(p.phase==='ready'&&updFail){hd.textContent=`A atualização para ${p.version} não terminou`;st.textContent='Na última tentativa o Prumo não foi atualizado. Clique em Instalar com o instalador: as telas de instalação vão aparecer e é só seguir.'}
@@ -1367,6 +1370,7 @@ function updUI(p){if(!p)return;if(p.failed&&!updFail){updFail=p.failed;toast('A 
   else if(p.phase==='latest'){hd.textContent='Você está na versão mais recente';st.textContent='O Prumo procura versões novas sozinho a cada poucas horas.'}
   updWas=p.phase}
 $('u-install').onclick=()=>{if(!window.api)return;$('u-head').textContent=updFail?'Abrindo o instalador…':'Reiniciando para atualizar… o Prumo abre sozinho em alguns segundos';api.installUpdate(!updFail)};
+$('u-reveal').onclick=async()=>{if(!await api.revealUpdate())toast('O instalador ainda está sendo baixado. Tente de novo em instantes')};$('u-log').onclick=()=>api.openUpdateLog();
 $('u-auto').onclick=()=>{upd.auto=upd.auto===false;save('update',upd);$('u-auto').setAttribute('aria-checked',upd.auto!==false)};
 $('bg-seg').onclick=async()=>{if(!window.api){toast('Disponível no programa instalado');return}bg.on=!bg.on;
   if(bg.on&&!rules.some(r=>r.auto)&&await askC('Organizar quais arquivos?','Nenhuma regra está marcada para organizar sozinha. Quer marcar todas? Você pode desmarcar uma por uma depois.','Marcar todas'))setAllAuto(true);
