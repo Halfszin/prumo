@@ -297,6 +297,8 @@ function updater() {
   const { autoUpdater } = require('electron-updater');
   // instala em silêncio ao fechar, a menos que o usuário desligue
   autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = false; // ver installUpdate e window-all-closed
+  // o GitHub responde 501 ao download por partes; baixa o arquivo inteiro direto
+  autoUpdater.disableDifferentialDownload = true; autoUpdater.disableWebInstaller = true;
   autoUpdater.setFeedURL({ provider: 'generic', url: u.url });
   if (!updaterOn) {
     updaterOn = true;
@@ -337,13 +339,26 @@ function installUpdate({ silent = true, run = true, hidden = false } = {}) {
     watcher.stop();
     if (tray) { tray.destroy(); tray = null; }
     if (sWorker) sWorker.terminate();
-    const f = readyUpdate.file; let size = -1; try { size = fsSync.statSync(f).size; } catch {}
+    const f = readyUpdate.file || require('electron-updater').autoUpdater.installerPath; let size = -1; try { size = fsSync.statSync(f).size; } catch {}
     updLog('INFO')(`arquivo do instalador: ${f} (${size} bytes)`);
-    if (!silent && f && size > 0) {
-      // plano B: abre o instalador como um clique duplo no Explorer (o mesmo caminho que funciona instalando à mão)
+    if (!f || size <= 0) { installing = false; updLog('ERRO')('instalador baixado não encontrado'); return false; }
+    // clique duplo no Explorer: mostra as telas do instalador e o aviso do Windows, se houver
+    const openByShell = (why) => {
+      if (why) updLog('ERRO')(why);
       shell.openPath(f).then((err) => { if (err) updLog('ERRO')('não abriu o instalador: ' + err); });
       setTimeout(() => app.exit(0), 1500);
-    } else setTimeout(() => require('electron-updater').autoUpdater.quitAndInstall(silent, run), 400);
+    };
+    if (!silent) openByShell();
+    else setTimeout(() => {
+      // O Windows às vezes recusa abrir o instalador sem assinatura ("spawn UNKNOWN", depois de 10 a 18 s);
+      // o atualizador então tentava com elevate.exe e a pergunta sumia. Aqui, se recusar, cai no clique duplo.
+      const args = ['--updated', '/S']; if (run) args.push('--force-run');
+      let p;
+      try { p = require('child_process').spawn(f, args, { detached: true, stdio: 'ignore' }); }
+      catch (e) { openByShell(`o Windows não deixou abrir o instalador (${e.code || e.message}); abrindo com as telas normais`); return; }
+      p.once('spawn', () => { updLog('INFO')('instalador aberto: ' + args.join(' ')); p.unref(); setTimeout(() => app.exit(0), 300); });
+      p.once('error', (e) => openByShell(`o Windows não deixou abrir o instalador (${e.code || e.message}); abrindo com as telas normais`));
+    }, 400);
     return true;
   } catch (e) { installing = false; updLog('ERRO')('instalar: ' + e.message); return false; }
 }

@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.13.2
+- Atualização: o Prumo abre o instalador ele mesmo. Quando o Windows recusa abrir o instalador sem assinatura ("spawn UNKNOWN" no registro), abre com as telas normais em vez de fechar sem instalar.
+- Download da atualização direto do arquivo inteiro (o GitHub não aceita o download por partes).
+
 ## 0.13.1
 - "Instalar com o instalador" agora abre o instalador baixado como um clique duplo no Explorer, sem depender do atualizador automático.
 - Quando a atualização não termina: botões para mostrar o instalador baixado e abrir o registro de atualização.
