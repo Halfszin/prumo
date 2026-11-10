@@ -21,7 +21,7 @@ Pontos em aberto:
 ## Outras ideias
 
 - Assinatura digital do instalador (SignPath Foundation, grátis para open source) e publicação na Microsoft Store, para tirar o aviso do SmartScreen.
-- Quadro mais completo: descrição com texto rico, checklist com progresso, arquivos anexados, prioridade, lembrete na data do cartão, cartão criado a partir de um arquivo, vários quadros e cartões que se repetem.
+- Quadro (o que falta): arquivos anexados ao cartão, lembrete do Windows na data do cartão, cartão criado a partir de um arquivo, vários quadros, cartões que se repetem e arquivar cartões.
 - Busca geral com Ctrl+K (arquivos, notas, cartões e ajustes).
 - Regras por idade ou tamanho (ex.: instaladores com mais de 30 dias vão para a Lixeira).
 - Ler texto de fotos e PDFs escaneados (OCR) para a busca no conteúdo.

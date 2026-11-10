@@ -1,5 +1,14 @@
 # Histórico de versões
 
+## 0.13.0
+- Quadro: cartão completo com descrição, checklist com progresso, prioridade, data, coluna e cor; botão de excluir na própria janela.
+- Quadro: cada cartão mostra quando foi alterado pela última vez, inclusive ao mudar de coluna, e quando foi criado.
+- Quadro: filtro de cartões (Ctrl+F).
+- Quadro: corrigido erro em que um cartão novo podia ganhar o mesmo número de um antigo.
+- Notas: escolha do tamanho do texto.
+- Notas: lista com cartões mais destacados, mais fácil de ver qual nota é qual.
+- O Prumo reabre na última tela usada e na última nota aberta.
+
 ## 0.12.8
 - Corrigido: o botão Abrir da pré-visualização abria a pasta de dados do Prumo em vez do arquivo.
 
