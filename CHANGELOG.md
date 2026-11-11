@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.14.2
+- Tema: escolha vendo a prévia das cores de cada tema, com a opção "Mesmo tema do Windows" separada.
+- Busca no conteúdo: avisa quando um PDF é escaneado (só imagem, sem texto), tem senha ou está danificado. Arquivo que falhou é lido de novo na próxima busca.
+
 ## 0.14.1
 - Tema Claro com fundo off-white (#FAF9F6) no lugar do creme.
 

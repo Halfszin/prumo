@@ -33,6 +33,7 @@ const hashFile = (p) => new Promise((res, rej) => {
 const TEXT = new Set(['txt', 'md', 'csv', 'json', 'xml', 'log', 'html', 'ini', 'yml', 'yaml']);
 const SEARCHABLE = new Set([...TEXT, 'pdf', 'docx', 'xlsx']);
 const cache = new Map();
+const issues = new Map(); // caminho -> motivo ('scan' = PDF só com imagem)
 let pdfjs = null;
 async function pdfText(p) {
   if (!pdfjs) pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -53,12 +54,14 @@ async function textOf(p) {
   const k = p + '|' + st.mtimeMs, hit = cache.get(k);
   if (hit !== undefined) return hit;
   let t = '';
+  issues.delete(p);
   try {
     if (TEXT.has(e)) t = (await fsp.readFile(p, 'utf8')).slice(0, 2e6);
     else if (e === 'pdf') t = await pdfText(p);
     else if (e === 'docx') t = (await require('mammoth').extractRawText({ path: p })).value;
     else if (e === 'xlsx') t = (await require('read-excel-file/node')(p)).map((r) => r.join(' ')).join('\n');
-  } catch { t = ''; }
+  } catch (err) { const msg = String((err && err.message) || err); issues.set(p, /password/i.test(msg) ? 'o arquivo tem senha' : /Invalid PDF|XRef|Missing PDF|Corrupt|zip/i.test(msg) ? 'o arquivo parece danificado' : msg.slice(0, 160)); return ''; } // falha não fica no cache: tenta de novo na próxima busca
+  if (e === 'pdf' && !t.trim()) issues.set(p, 'scan');
   cache.set(k, t);
   return t;
 }
@@ -78,4 +81,5 @@ async function searchContent(q, paths, stop) {
   return out;
 }
 
-module.exports = { parseNfe, readNfe, hashFile, textOf, searchContent, SEARCHABLE };
+const issuesFor = (paths) => paths.filter((p) => issues.has(p)).map((p) => ({ path: p, why: issues.get(p) }));
+module.exports = { parseNfe, readNfe, hashFile, textOf, searchContent, issuesFor, SEARCHABLE };
