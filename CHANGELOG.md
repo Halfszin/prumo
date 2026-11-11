@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.14.1
+- Tema Claro com fundo off-white (#FAF9F6) no lugar do creme.
+
 ## 0.14.0
 - Quadro: lápis em cada cartão para abrir a edição completa.
 - Quadro: cronômetro em cada cartão (tempo na coluna e tempo total). Para quando o cartão chega em Concluído ou na última coluna; pode ser desligado em Configurações > Aparência.
