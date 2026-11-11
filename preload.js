@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('api', {
   exportRules: (rules) => call('rules-export', rules),
   importRules: () => call('rules-import'),
   noteImg: (dataUrl) => call('note-img', dataUrl),
+  copyImage: (src) => call('copy-img', src),
   onOpenCal: (cb) => ipcRenderer.on('open-cal', (_e, k) => cb(k)),
   openUrl: (u) => call('open-url', u),
   exportData: () => call('data:export'),

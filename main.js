@@ -140,6 +140,15 @@ ipcMain.handle('preview', async (_e, p) => {
   return { kind: 'none' };
 });
 ipcMain.handle('copy', (_e, t) => clipboard.writeText(String(t)));
+// copia uma imagem das notas (arquivo salvo pelo Prumo ou imagem embutida)
+ipcMain.handle('copy-img', (_e, src) => {
+  src = String(src || '');
+  let img;
+  if (src.startsWith('data:image/')) img = nativeImage.createFromDataURL(src);
+  else if (src.startsWith('file:///')) img = nativeImage.createFromPath(decodeURIComponent(src.slice(8)).split('/').join(path.sep));
+  if (!img || img.isEmpty()) return false;
+  clipboard.writeImage(img); return true;
+});
 ipcMain.handle('open', (_e, p) => shell.openPath(p));
 ipcMain.handle('reveal', (_e, p) => shell.showItemInFolder(p));
 // exclui para a Lixeira do Windows (nunca apaga de vez); só arquivos dentro da pasta aberta
@@ -431,6 +440,7 @@ function contextMenu(w, p) {
   }
   const link = webUrl(p.linkURL);
   if (link) items.push({ label: 'Abrir link no navegador', click: () => shell.openExternal(link) }, { label: 'Copiar link', click: () => clipboard.writeText(link) }, { type: 'separator' });
+  if (p.mediaType === 'image') items.push({ label: 'Copiar imagem', click: () => w.webContents.copyImageAt(p.x, p.y) }, { type: 'separator' });
   if (p.isEditable) items.push({ label: 'Recortar', role: 'cut', enabled: p.editFlags.canCut }, { label: 'Copiar', role: 'copy', enabled: p.editFlags.canCopy }, { label: 'Colar', role: 'paste', enabled: p.editFlags.canPaste }, { label: 'Selecionar tudo', role: 'selectAll' });
   else if (p.selectionText.trim()) items.push({ label: 'Copiar', role: 'copy' });
   while (items.length && items[items.length - 1].type === 'separator') items.pop();

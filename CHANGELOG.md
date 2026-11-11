@@ -1,5 +1,15 @@
 # Histórico de versões
 
+## 0.14.0
+- Quadro: lápis em cada cartão para abrir a edição completa.
+- Quadro: cronômetro em cada cartão (tempo na coluna e tempo total). Para quando o cartão chega em Concluído ou na última coluna; pode ser desligado em Configurações > Aparência.
+- Quadro: cor própria para cada coluna.
+- Notas: copiar imagem com Ctrl+C (clique na imagem antes) ou pelo botão direito > Copiar imagem.
+- Notas: corrigida a lista com espaços enormes entre os cartões.
+- Notas: fica só o tamanho do texto (saiu o tamanho da nota inteira).
+- Temas: o tema Claro passa a ser creme (#FEF1CF); o tema Cinza saiu (quem usava passa para Escuro).
+- Listas suspensas legíveis nos temas escuros.
+
 ## 0.13.5
 - Notas: tamanho das letras por número, como no Word. "Texto" muda só o trecho selecionado; "Nota" muda o tamanho padrão da nota inteira, sem mexer no texto que tem tamanho próprio.
 - Botão da lua: escolha dois tons favoritos em Configurações > Aparência e alterne entre eles com um clique.
