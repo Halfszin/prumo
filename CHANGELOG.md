@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.14.3
+- Versão para a Microsoft Store ("Prumo Files"), atualizada pela própria Loja.
+
 ## 0.14.2
 - Tema: escolha vendo a prévia das cores de cada tema, com a opção "Mesmo tema do Windows" separada.
 - Busca no conteúdo: avisa quando um PDF é escaneado (só imagem, sem texto), tem senha ou está danificado. Arquivo que falhou é lido de novo na próxima busca.
