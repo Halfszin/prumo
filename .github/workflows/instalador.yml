@@ -26,8 +26,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   loja:
-    # pacote para enviar à Microsoft Store (a Loja assina); fica nos artefatos da execução, não na página de versões
+    # pacote para enviar à Microsoft Store (a Loja assina); vai junto na página da versão para baixar com link direto
     if: ${{ inputs.loja }}
+    needs: build
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +39,7 @@ jobs:
       - run: npm ci
       - run: node -e "if(require('./package.json').build.appx.identityName==='PREENCHER'){console.error('Preencha build.appx no package.json com os dados do Partner Center');process.exit(1)}"
       - run: npx electron-builder --win appx --publish never
-      - uses: actions/upload-artifact@v4
-        with:
-          name: prumo-loja
-          path: dist/*.appx
+      - run: gh release upload "v$(node -p "require('./package.json').version")" dist/Prumo-Loja-*.appx --clobber
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

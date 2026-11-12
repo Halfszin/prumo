@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.14.4
+- Pacote da Microsoft Store disponível na página da versão.
+
 ## 0.14.3
 - Versão para a Microsoft Store ("Prumo Files"), atualizada pela própria Loja.
 

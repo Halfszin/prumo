@@ -53,7 +53,7 @@ Próximos passos e o plano do app para Android: [IDEIAS.md](IDEIAS.md).
 
 1. No Partner Center, reserve o nome e copie de "Identidade do produto" os campos `Package/Identity/Name`, `Package/Identity/Publisher` e `Package/Properties/PublisherDisplayName` para `build.appx` no `package.json` (`identityName`, `publisher`, `publisherDisplayName`).
 2. Em Actions > Instalador do Windows > Run workflow, marque "Gerar também o pacote da Microsoft Store".
-3. Baixe o artefato `prumo-loja` (o `.appx`) e envie no Partner Center. A Loja assina o pacote.
+3. Baixe o `Prumo-Loja-X.Y.Z.appx` na página da versão e envie no Partner Center. A Loja assina o pacote.
 
 Na versão da Loja o Prumo não procura atualizações sozinho: quem atualiza é a própria Loja.
 
