@@ -326,7 +326,7 @@ function updater() {
   return autoUpdater;
 }
 function setupUpdater() {
-  if (!app.isPackaged || (state.update || {}).check === false) return;
+  if (!app.isPackaged || process.windowsStore || (state.update || {}).check === false) return; // pela Loja, quem atualiza é a própria Microsoft Store
   try { updater().checkForUpdates().catch(() => {}); } catch {}
 }
 ipcMain.handle('update:state', () => readyUpdate);
@@ -385,6 +385,7 @@ function checkPendingUpdate() {
 }
 ipcMain.handle('update:check', async () => {
   if (!app.isPackaged) return 'A verificação funciona no programa instalado.';
+  if (process.windowsStore) return 'Esta é a versão da Microsoft Store: as atualizações chegam pela própria Loja.';
   if (updInfo.phase === 'downloading') return `Baixando a versão ${updInfo.version}… ${updInfo.percent || 0}%`;
   if (readyUpdate) return `A versão ${readyUpdate.version} está pronta. Clique em Reiniciar e atualizar.`;
   try {

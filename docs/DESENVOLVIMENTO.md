@@ -49,6 +49,14 @@ Para gerar o instalador no próprio computador: `npm run dist` (no Windows, com 
 
 Próximos passos e o plano do app para Android: [IDEIAS.md](IDEIAS.md).
 
+## Microsoft Store
+
+1. No Partner Center, reserve o nome e copie de "Identidade do produto" os campos `Package/Identity/Name`, `Package/Identity/Publisher` e `Package/Properties/PublisherDisplayName` para `build.appx` no `package.json` (`identityName`, `publisher`, `publisherDisplayName`).
+2. Em Actions > Instalador do Windows > Run workflow, marque "Gerar também o pacote da Microsoft Store".
+3. Baixe o artefato `prumo-loja` (o `.appx`) e envie no Partner Center. A Loja assina o pacote.
+
+Na versão da Loja o Prumo não procura atualizações sozinho: quem atualiza é a própria Loja.
+
 ## Ainda não testado em Windows real
 
 Corretor ortográfico, instalação silenciosa de ponta a ponta, notificações dos lembretes e organização automática em pastas grandes.
