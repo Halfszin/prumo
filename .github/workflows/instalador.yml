@@ -12,6 +12,13 @@ on:
 permissions:
   contents: write
 jobs:
+  loja:
+        description: 'Gerar também o pacote da Microsoft Store (.appx)'
+        type: boolean
+        default: false
+permissions:
+  contents: write
+jobs:
   build:
     runs-on: windows-latest
     steps:
