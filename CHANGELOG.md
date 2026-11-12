@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.14.5
+- Busca no conteúdo: mostra o andamento ("lendo 120 de 632") e os arquivos encontrados na hora; começa pela pasta aberta; ignora espaços extras ou faltando no texto dos PDFs; pula o arquivo que travar a leitura.
+
 ## 0.14.4
 - Pacote da Microsoft Store disponível na página da versão.
 

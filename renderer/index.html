@@ -1487,7 +1487,7 @@ function renderVbar(){let h='';
   if(view==='dup'){if(!dups)h='<span>Procurando cópias idênticas (mesmo conteúdo, não só o mesmo nome)…</span>';else{const s=dupStats();h=s.g?`<span><b>${s.n} ${s.n===1?'cópia':'cópias'}</b> em ${s.g} ${s.g===1?'grupo':'grupos'} · apagando as cópias você recupera <b>${fmtS(s.mb)}</b>. O arquivo mais antigo de cada grupo fica.</span><button class="btn s" id="vb-mark">Marcar cópias</button>`:'<span>Nenhum arquivo duplicado nesta pasta.</span>'}}
   else if(view==='old'){const l=files.filter(isOld),mb=l.reduce((a,f)=>a+f.mb,0);h=l.length?`<span><b>${l.length}</b> ${l.length===1?'arquivo não é aberto':'arquivos não são abertos'} há mais de um ano · ${fmtS(mb)}</span><button class="btn s" id="vb-all">Marcar todos</button><button class="btn s" id="vb-arch"${sel.size?'':' disabled'}>Arquivar marcados</button>`:'<span>Nenhum arquivo parado há mais de um ano.</span>'}
   if(view.startsWith('m:')){const [y,m]=view.slice(2).split('-').map(Number),l=files.filter(f=>inMonth(f,y,m)),mb=l.reduce((a,f)=>a+f.mb,0);h=`<span><b>${l.length}</b> ${l.length===1?'arquivo modificado':'arquivos modificados'} em ${MESL[m]} de ${y} · ${fmtS(mb)}</span><button class="btn s" id="vb-cal" data-y="${y}" data-m="${m}">Ver no calendário</button><button class="btn s" id="vb-back">Voltar ao Dashboard</button>`}
-  if(qct&&query.length>=2)h+=searching?'<span>Buscando dentro de PDF, Word, Excel e textos…</span>':window.api?`<span>${hits.size} ${hits.size===1?'arquivo tem':'arquivos têm'} “${esc(query)}” no conteúdo.</span>`:'<span>A busca no conteúdo funciona no programa instalado. Aqui a busca é só pelo nome.</span>';
+  if(qct&&query.length>=2)h+=searching?`<span>Buscando dentro de PDF, Word, Excel e textos… ${sProg?`lendo ${sProg.done} de ${sProg.total}`:''}${hits.size?` · ${hits.size} ${hits.size===1?'encontrado':'encontrados'} até agora`:''}</span>`:window.api?`<span>${hits.size} ${hits.size===1?'arquivo tem':'arquivos têm'} “${esc(query)}” no conteúdo.</span>`:'<span>A busca no conteúdo funciona no programa instalado. Aqui a busca é só pelo nome.</span>';
   $('vbar').innerHTML=h;$('vbar').hidden=!h}
 const inMonth=(f,y,m)=>{if(!f.mtime)return false;const d=new Date(f.mtime);return d.getFullYear()===y&&d.getMonth()===m};
 $('vbar').onclick=e=>{const id=e.target.id;
@@ -1505,8 +1505,11 @@ $('sel-tag').onclick=()=>openTags(files.filter(f=>sel.has(f.id)));
 
 // busca no conteúdo
 const SRCH=new Set(['pdf','docx','xlsx','txt','md','csv','json','xml','log','html','ini','yml','yaml']);let sq=0,sT;
-function runSearch(){clearTimeout(sT);hits=new Map();searching=false;if(!qct||query.length<2||!window.api||!root)return;searching=true;const my=++sq,q=query;
-  sT=setTimeout(async()=>{let r=[],bad=[];try{const res=await api.search(q,files.filter(f=>SRCH.has(ext(f.name))).map(f=>f.path));if(!res)return;r=res.r||res;bad=res.bad||[]}catch(e){}if(my!==sq)return;hits=new Map(r.map(x=>[x.path,x.snip]));searching=false;render();
+let sProg=null,sRT=0;
+if(window.api&&api.onSearchProgress)api.onSearchProgress(m=>{if(!searching)return;sProg=m;if(m.hit)hits.set(m.hit.path,m.hit.snip);if(!sRT)sRT=setTimeout(()=>{sRT=0;if(searching)render()},250)});
+function runSearch(){clearTimeout(sT);hits=new Map();searching=false;sProg=null;if(!qct||query.length<2||!window.api||!root)return;searching=true;const my=++sq,q=query;
+  sT=setTimeout(async()=>{let r=[],bad=[];try{const here=view.startsWith('f:')?view.slice(2):null,list=files.filter(f=>SRCH.has(ext(f.name)));if(here)list.sort((a,b)=>(ownerOf(b)===here)-(ownerOf(a)===here)); // a pasta aberta primeiro
+    const res=await api.search(q,list.map(f=>f.path));if(!res)return;r=res.r||res;bad=res.bad||[]}catch(e){}if(my!==sq)return;hits=new Map(r.map(x=>[x.path,x.snip]));searching=false;render();
     const nb=bad.filter(b=>!badSeen.has(b.path));nb.forEach(b=>badSeen.add(b.path));if(nb.length){const nm=x=>x.path.split(/[\\/]/).pop(),scan=nb.filter(b=>b.why==='scan');
       toast(scan.length===nb.length?(scan.length===1?`"${nm(scan[0])}" é um PDF escaneado (só imagem), sem texto para procurar`:`${scan.length} PDFs são escaneados (só imagem), sem texto para procurar`):(x=>(x.path?`Não deu para ler "${nm(x)}"${nb.length>1?` e mais ${nb.length-1}`:''}: `:'')+x.why)(nb.find(b=>b.why!=='scan')))}},350)}
 const badSeen=new Set();

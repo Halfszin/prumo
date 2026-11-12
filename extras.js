@@ -65,18 +65,30 @@ async function textOf(p) {
   cache.set(k, t);
   return t;
 }
-const fold = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const fold = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' '); // espaços repetidos do PDF não atrapalham
+const TIMEOUT = 20000;
+// arquivo que trava a leitura é pulado depois de 20 s, para não parar a busca inteira
+const withTimeout = (p, f) => { let t; return Promise.race([p.finally(() => clearTimeout(t)), new Promise((res) => { t = setTimeout(() => { issues.set(f, 'demorou demais para ler'); res(''); }, TIMEOUT); })]); };
 // stop(): devolve true quando uma busca mais nova chegou; aí esta para no próximo arquivo
-async function searchContent(q, paths, stop) {
+// onProgress(feitos, total, achado): avisa o andamento e cada arquivo encontrado na hora
+async function searchContent(q, paths, stop, onProgress) {
   const nq = fold(String(q).trim());
   const out = [];
   if (nq.length < 2) return out;
-  for (const p of paths) {
+  for (let n = 0; n < paths.length; n++) {
+    const p = paths[n];
     await new Promise((r) => setImmediate(r)); // deixa chegar o pedido de cancelamento
     if (stop && stop()) return null;
-    const t = await textOf(p).catch(() => '');
-    const i = fold(t).indexOf(nq);
-    if (i >= 0) out.push({ path: p, snip: t.slice(Math.max(0, i - 40), i + nq.length + 60).replace(/\s+/g, ' ').trim() });
+    const raw = (await withTimeout(textOf(p).catch(() => ''), p)).replace(/\s+/g, ' ');
+    const fr = fold(raw);
+    let i = fr.indexOf(nq);
+    if (i < 0 && nq.includes(' ')) { // PDF que guarda as letras sem os espaços: compara sem espaço nenhum
+      const j = fr.replace(/ /g, '').indexOf(nq.replace(/ /g, ''));
+      if (j >= 0) for (let k = 0, c = 0; k < fr.length; k++) { if (fr[k] !== ' ' && c++ === j) { i = k; break; } }
+    }
+    const hit = i >= 0 ? { path: p, snip: raw.slice(Math.max(0, i - 40), i + nq.length + 60).trim() } : null;
+    if (hit) out.push(hit);
+    if (onProgress) onProgress(n + 1, paths.length, hit);
   }
   return out;
 }

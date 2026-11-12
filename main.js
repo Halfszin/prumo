@@ -187,7 +187,10 @@ const sWait = new Map();
 function searchWorker() {
   if (sWorker) return sWorker;
   sWorker = new Worker(path.join(__dirname, 'search-worker.js'));
-  sWorker.on('message', ({ id, r, bad }) => { const f = sWait.get(id); if (f) { sWait.delete(id); f({ r, bad: bad || [] }); } });
+  sWorker.on('message', ({ id, r, bad, prog, hit }) => {
+    if (prog) { if (id === sId) send('search-progress', { done: prog[0], total: prog[1], hit }); return; }
+    const f = sWait.get(id); if (f) { sWait.delete(id); f({ r, bad: bad || [] }); }
+  });
   const reset = (err) => { for (const f of sWait.values()) f({ r: [], bad: err && err.message ? [{ path: '', why: 'a busca parou: ' + err.message }] : [] }); sWait.clear(); sWorker = null; };
   sWorker.on('error', reset); sWorker.on('exit', reset);
   return sWorker;
