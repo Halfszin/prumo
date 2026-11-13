@@ -64,6 +64,39 @@ ipcMain.handle('pick-folder', async () => {
   return scan(state.root);
 });
 ipcMain.handle('scan', (_e, root) => scan(root));
+// pastas de consulta: o Prumo só lê (busca, favoritos, abrir); nunca organiza, move ou apaga nada nelas
+const xFolders = () => (Array.isArray(state.extra) ? state.extra : []).filter((p) => typeof p === 'string');
+const inside = (base, p) => { const r = path.relative(path.resolve(base), path.resolve(String(p))); return !!r && !r.startsWith('..') && !path.isAbsolute(r); };
+const readable = (p) => insideRoot(p) || xFolders().some((b) => inside(b, p)) || (state.favFiles || []).includes(String(p));
+ipcMain.handle('extra:list', () => xFolders());
+ipcMain.handle('extra:add', async () => {
+  const r = await dialog.showOpenDialog({ properties: ['openDirectory'] }); refocus();
+  if (r.canceled) return null;
+  const p = r.filePaths[0];
+  if (state.root && (path.resolve(p) === path.resolve(state.root) || inside(state.root, p))) return { error: 'Essa pasta já faz parte da pasta que você está organizando.' };
+  if (!xFolders().includes(p)) state.extra = [...xFolders(), p].slice(-10);
+  persist(); return xFolders();
+});
+ipcMain.handle('extra:del', (_e, p) => { state.extra = xFolders().filter((x) => x !== p); persist(); return xFolders(); });
+ipcMain.handle('fav:pick', async () => {
+  const r = await dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] }); refocus();
+  if (r.canceled) return [];
+  state.favFiles = [...new Set([...(state.favFiles || []), ...r.filePaths])].slice(-500); persist();
+  return r.filePaths;
+});
+ipcMain.handle('extra:scan', async () => {
+  const out = [], seen = new Set(), meta = state.meta || {};
+  for (const b of xFolders()) {
+    const files = []; await walk(b, b, files, 0);
+    const nm = path.basename(b) || b;
+    for (const f of files) if (!insideRoot(f.path) && !seen.has(f.path)) { seen.add(f.path); out.push({ ...f, rel: nm + (f.rel ? '/' + f.rel : '') }); }
+  }
+  for (const p of state.favFiles || []) { // favoritos avulsos, de qualquer pasta
+    if (seen.has(p) || insideRoot(p) || !(meta[p] && meta[p].fav)) continue;
+    try { const st = await fs.stat(p); seen.add(p); out.push({ name: path.basename(p), path: p, size: st.size, mtime: st.mtimeMs, atime: st.atimeMs, rel: path.basename(path.dirname(p)), loose: true }); } catch {}
+  }
+  return out;
+});
 // favoritos e etiquetas ficam por caminho; acompanham o arquivo quando ele muda de lugar
 const remapMeta = (from, to) => { const m = state.meta; if (m && m[from]) { m[to] = m[from]; delete m[from]; } };
 const HMAX = 200, HDAYS = 90; // retenção do histórico (ver PRIVACIDADE.md)
@@ -198,7 +231,7 @@ function searchWorker() {
 ipcMain.handle('search', (_e, q, paths) => new Promise((res) => {
   for (const [k, f] of sWait) { f(null); sWait.delete(k); } // a busca anterior perde a vez
   const id = ++sId; sWait.set(id, res);
-  searchWorker().postMessage({ id, q, paths: (paths || []).filter(insideRoot) });
+  searchWorker().postMessage({ id, q, paths: (paths || []).filter(readable) });
 }));
 // regras em arquivo, para levar a outro computador
 const cleanRules = (r) => (Array.isArray(r) ? r : []).filter((x) => x && typeof x.folder === 'string' && x.folder.trim()).slice(0, 200)
@@ -453,7 +486,7 @@ function contextMenu(w, p) {
 
 function createWindow() {
   const w = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 900, backgroundColor: '#17283b', title: 'Prumo',
+    width: 1280, height: 820, minWidth: 640, minHeight: 480, backgroundColor: '#17283b', title: 'Prumo',
     icon: fsSync.existsSync(path.join(__dirname, 'build', 'icon.png')) ? path.join(__dirname, 'build', 'icon.png') : undefined,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: false, plugins: true, spellcheck: (state.prefs || {}).spell !== false }
   });

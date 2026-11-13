@@ -1,5 +1,11 @@
 # Histórico de versões
 
+## 0.15.0
+- Pastas de consulta: outras pastas que o Prumo só lê. Dá para buscar nelas (inclusive dentro dos arquivos), abrir e favoritar, sem organizar, mover ou apagar nada.
+- Favoritos: favoritar arquivos de qualquer pasta sem sair da pasta que está sendo organizada.
+- Calendário: número da semana do ano em cada linha (pode ser desligado em Configurações > Aparência).
+- Janela pequena: a barra lateral vira só ícones abaixo de 900 px, e a janela pode ficar menor (até 640 px, meia tela de notebook).
+
 ## 0.14.5
 - Busca no conteúdo: mostra o andamento ("lendo 120 de 632") e os arquivos encontrados na hora; começa pela pasta aberta; ignora espaços extras ou faltando no texto dos PDFs; pula o arquivo que travar a leitura.
 
