@@ -1,6 +1,6 @@
 {
   "name": "prumo",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Prumo: organizador de arquivos open source para Windows",
   "author": "Halfszin e colaboradores do Prumo",
   "main": "main.js",
@@ -24,6 +24,7 @@
       "background.js",
       "extras.js",
       "search-worker.js",
+      "remote.js",
       "renderer/**",
       "build/icon.png"
     ],
@@ -48,7 +49,9 @@
       "applicationId": "Prumo",
       "displayName": "Prumo Files",
       "backgroundColor": "transparent",
-      "languages": ["pt-BR"],
+      "languages": [
+        "pt-BR"
+      ],
       "artifactName": "Prumo-Loja-${version}.${ext}"
     },
     "publish": [
@@ -70,6 +73,7 @@
     "electron-updater": "^6.3.9",
     "mammoth": "^1.8.0",
     "pdfjs-dist": "^4.10.38",
+    "qrcode-generator": "^1.4.4",
     "read-excel-file": "^5.8.6"
   }
 }

@@ -1,22 +1,14 @@
 # Ideias e próximos passos
 
-## Prumo de bolso (Android)
+## Prumo no celular
 
-Decisão: **não** portar o Prumo inteiro para o Android. O organizador de arquivos esbarra no acesso restrito a arquivos do Android 11+ (a permissão "acesso a todos os arquivos" passa por análise na Google Play), nos limites de apps em segundo plano e no fato de que o problema de pastas bagunçadas com NF-e e documentos é do computador, não do celular.
+Feito na 0.16: o Prumo do computador abre um acesso pela rede de casa (Configurações > Celular, com QR code). O celular usa a mesma interface pelo navegador: arquivos do PC (ver, buscar, abrir, favoritar), Notas, Calendário e Quadro. Organizar, mover e excluir ficam só no computador.
 
-O que faz sentido é um app companheiro, menor:
+Próximos passos possíveis:
 
-- **Notas** (com links, imagens e o guia).
-- **Calendário e lembretes** (no celular os avisos funcionam melhor).
-- **Quadro de tarefas.**
-- **Foto de documento:** fotografar uma nota fiscal ou recibo e mandar para o Prumo do computador organizar.
-
-Pontos em aberto:
-
-- **Sincronização sem coletar dados:** nada de servidor próprio. Caminho previsto: uma pasta na nuvem do próprio usuário (Google Drive, OneDrive) ou a rede de casa.
-- **Tecnologia:** reaproveitar a interface (`renderer/index.html`) com Capacitor; a parte de arquivos do Windows (mover, bandeja, instalador) fica de fora.
-- **Custos:** conta de desenvolvedor da Google Play (US$ 25, uma vez).
-- **Antes de começar:** confirmar o uso real: o que o usuário sente falta de fazer no celular hoje.
+- App Android de verdade (Capacitor) que abre esse mesmo endereço, com ícone próprio e avisos de lembrete no celular.
+- Acesso fora de casa sem servidor próprio (ex.: túnel do próprio usuário); hoje só funciona no mesmo Wi-Fi.
+- Mandar foto de documento do celular para a pasta do computador.
 
 ## Outras ideias
 

@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.16.0
+- Prumo no celular: em Configurações > Celular, ligue o acesso e leia o QR code. No mesmo Wi-Fi, o celular vê, busca (inclusive dentro dos arquivos) e abre os arquivos do computador, favorita, e usa Notas, Calendário e Quadro. O que muda de um lado aparece no outro. Organizar, mover e excluir continuam só no computador.
+- Política de privacidade 1.1: explica o acesso pelo celular (desligado por padrão, só na rede de casa, sem internet).
+
 ## 0.15.0
 - Pastas de consulta: outras pastas que o Prumo só lê. Dá para buscar nelas (inclusive dentro dos arquivos), abrir e favoritar, sem organizar, mover ou apagar nada.
 - Favoritos: favoritar arquivos de qualquer pasta sem sair da pasta que está sendo organizada.

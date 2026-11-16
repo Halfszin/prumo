@@ -8,6 +8,10 @@ const path = require('path');
 const fs = require('fs/promises');
 const fsSync = require('fs');
 
+// guarda cada função registrada para o acesso pelo celular reaproveitar as mesmas (ver remote.js)
+const handlers = new Map();
+{ const h = ipcMain.handle.bind(ipcMain); ipcMain.handle = (ch, fn) => { handlers.set(ch, fn); return h(ch, fn); }; }
+
 if (!app.requestSingleInstanceLock()) app.quit();
 if (process.env.PRUMO_TEST) global.prumoRequire = require; // só para testes automáticos
 app.setAppUserModelId('org.prumo.app');
@@ -53,7 +57,7 @@ async function scan(root) { const files = []; await walk(root, root, files, 0); 
 
 // ---- mover sem nunca sobrescrever ----
 ipcMain.handle('state:get', () => state);
-ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors', 'meta', 'tagdefs', 'notes', 'recur'].includes(k)) { state[k] = v; persist(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
+ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors', 'meta', 'tagdefs', 'notes', 'recur'].includes(k)) { state[k] = v; persist(); if (remote) remote.bump(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
 // Após diálogos nativos o Windows pode deixar os campos de texto sem foco; devolve o foco à janela
 const refocus = () => { if (mainWin && !mainWin.isDestroyed()) { mainWin.focus(); mainWin.webContents.focus(); } };
 ipcMain.handle('pick-folder', async () => {
@@ -499,8 +503,30 @@ function createWindow() {
   w.on('focus', () => { if (!w.isDestroyed()) w.webContents.focus(); });
   w.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
+// ---- acesso pelo celular (Wi-Fi de casa), desligado por padrão ----
+const { createRemote } = require('./remote');
+let remote = null;
+const mobileState = () => { if (!state.mobile || !state.mobile.token) state.mobile = { ...(state.mobile || {}), token: crypto.randomBytes(18).toString('base64url') }; return state.mobile; };
+function getRemote() {
+  if (!remote) remote = createRemote({
+    handlers, getState: () => state, readable, version: app.getVersion(),
+    notesDir: () => path.join(app.getPath('userData'), 'notas'), rendererDir: path.join(__dirname, 'renderer'),
+    setKey: (k, v) => { state[k] = v; persist(); send('remote-set', k); },
+  });
+  return remote;
+}
+async function mobileOn(on) {
+  const m = mobileState(); m.on = !!on; persist();
+  try { if (on) await getRemote().start(); else if (remote) remote.stop(); } catch (e) { m.on = false; persist(); return { ...getRemote().info(), error: 'Não foi possível ligar: ' + ((e && e.message) || e) }; }
+  return getRemote().info();
+}
+ipcMain.handle('mobile:info', () => ({ ...getRemote().info(), want: !!(state.mobile || {}).on }));
+ipcMain.handle('mobile:set', (_e, on) => mobileOn(on));
+ipcMain.handle('mobile:newcode', async () => { const m = mobileState(); m.token = crypto.randomBytes(18).toString('base64url'); persist(); return getRemote().info(); });
+
 app.whenReady().then(() => {
   loadState(); fixIds(); pruneHistory(); checkPendingUpdate(); persist();
+  if ((state.mobile || {}).on) mobileOn(true);
   setTimeout(cleanNoteImages, 15000);
   Menu.setApplicationMenu(null);
   applyBg(); setupUpdater();

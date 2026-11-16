@@ -1,6 +1,6 @@
 # Política de Privacidade do Prumo
 
-Versão 1.0 · em vigor desde 8 de novembro de 2026
+Versão 1.1 · em vigor desde 16 de novembro de 2026
 
 O Prumo é um organizador de arquivos para Windows, de código aberto (licença MIT). Esta política explica, em linguagem simples, o que acontece com seus dados.
 
@@ -26,6 +26,7 @@ O Prumo lê os arquivos das pastas que você abre para mostrar, organizar, procu
 - **Atualizações:** o Prumo procura uma versão nova no GitHub (github.com) a cada poucas horas e, se houver, baixa o instalador. Como em qualquer download, o GitHub recebe o endereço IP do seu computador e dados técnicos da conexão, de acordo com a [declaração de privacidade do GitHub](https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement). Você pode desligar isso em Configurações > Privacidade e dados; desligado, o Prumo não se conecta a nada.
 - **Links nas notas:** quando você clica num link de uma nota, ele abre no seu navegador, fora do Prumo.
 - **Corretor ortográfico:** usa o corretor do próprio Windows, no seu computador.
+- **Acesso pelo celular** (desligado até você ligar, em Configurações > Celular): o Prumo passa a aceitar conexões só da sua rede local (o Wi-Fi de casa), e só de aparelhos com o código de pareamento do QR code. Os arquivos, notas, lembretes e cartões vão direto do computador para o celular, pela sua rede, sem passar pela internet nem por servidor nenhum. O celular guarda só o código de pareamento e as suas preferências de aparência. Gerar um novo código desconecta os celulares; desligar a opção fecha o acesso.
 
 Nenhuma outra conexão é feita.
 
