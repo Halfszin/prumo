@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.16.2
+- Celular: parou de piscar. As mudanças do computador aparecem sem recarregar a página e esperam você terminar de digitar.
+- Celular e computador juntam as mudanças feitas ao mesmo tempo (notas, cartões e lembretes) em vez de uma apagar a outra.
+
 ## 0.16.1
 - App Android (Prumo-Android-X.Y.Z.apk na página da versão): lê o QR code do computador e abre o Prumo em tela cheia, sem passar pela Play Store. Sem atualização automática: para trocar de versão, desinstale e instale de novo.
 

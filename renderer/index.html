@@ -1435,8 +1435,18 @@ $('side-groups').onchange=e=>{const k=e.target.dataset.sg;if(!k)return;const s=n
 $('weekno-seg').onclick=()=>{prefs.weekNo=prefs.weekNo===false;savePrefs();syncSettings();if(page==='cal')renderCal()};
 if(window.api&&api.mobileSet&&!api.remote){$('ph-on').onclick=async()=>{const on=$('ph-on').getAttribute('aria-checked')!=='true';phoneUI(await api.mobileSet(on))};
   $('ph-new').onclick=async()=>{if(await askC('Gerar um novo código?','Os celulares conectados vão precisar ler o QR code de novo.','Gerar'))phoneUI(await api.mobileNewCode())};
-  // o que o celular mudar aparece aqui na hora
-  api.onRemoteSet(async k=>{const st=await api.getState();if(k==='notes'){notes=st.notes||[];if(page==='notes')renderNotes()}else if(k==='board'){if(st.board)board=st.board;if(page==='board')renderBoard()}else if(k==='events'||k==='recur'){events={...(st.events||{})};recur=st.recur||[]}else if(k==='meta')meta={...(st.meta||{})};else if(k==='tagdefs')tagdefs=st.tagdefs||tagdefs;render()})}
+}
+// mudanças feitas no outro aparelho (celular <-> computador): aplica só os dados, e espera quem está digitando
+if(window.api&&api.onRemoteSet){const pend=new Set();
+  const busy=()=>{const a=document.activeElement;return !!(a&&(a.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))||!!document.querySelector('dialog[open]')};
+  const apply=async()=>{if(!pend.size||busy())return;const ks=new Set(pend),all=ks.has('all');pend.clear();let st;try{st=await api.getState()}catch(e){return}
+    const has=k=>all||ks.has(k);
+    if(has('notes')&&JSON.stringify(st.notes||[])!==JSON.stringify(notes)){notes=st.notes||[];if(page==='notes')renderNotes()}
+    if(has('board')&&st.board&&JSON.stringify(st.board)!==JSON.stringify(board)){board=st.board;if(page==='board')renderBoard()}
+    if(has('events')||has('recur')){events={...(st.events||{})};recur=st.recur||[];if(page==='cal')renderCal()}
+    if(has('meta'))meta={...(st.meta||{})};if(has('tagdefs')&&st.tagdefs)tagdefs=st.tagdefs;
+    if(page==='files')render()};
+  api.onRemoteSet(k=>{pend.add(k);apply()});document.addEventListener('focusout',()=>setTimeout(apply,400));setInterval(apply,2000)}
 $('ktimer-seg').onclick=()=>{prefs.kTimer=prefs.kTimer===false;savePrefs();syncSettings();renderBoard()};
 $('anim-seg').onclick=()=>{prefs.noAnim=!prefs.noAnim;applyPrefs();savePrefs();syncSettings()};
 function closeSet(){setRules(rules.filter(r=>r.folder.trim()));save('rules',rules);$('settings').hidden=true;document.body.classList.remove('in-set');render()}

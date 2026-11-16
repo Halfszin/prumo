@@ -6,7 +6,7 @@
   var T = ''; try { T = localStorage.getItem('prumo-token') || ''; } catch (e) {}
   // QR lido com a página já aberta: guarda o código novo e recarrega
   window.addEventListener('hashchange', function () { var h = location.hash.match(/t=([\w-]+)/); if (h) { try { localStorage.setItem('prumo-token', h[1]); } catch (e) {} location.replace(location.pathname); } });
-  var ver = null, NU = '';
+  var ver = null, NU = '', listeners = [], since = {}; // since: quando cada parte foi lida do computador
   function unpaired() {
     document.documentElement.classList.add('unpaired');
     var show = function () {
@@ -37,7 +37,7 @@
     remote: true,
     getState: function () {
       return rpc('getState').then(function (s) {
-        NU = s.notesUrl || '';
+        NU = s.notesUrl || ''; ['board', 'events', 'recur', 'notes', 'meta', 'tagdefs'].forEach(function (k) { since[k] = s.now; });
         (s.notes || []).forEach(function (n) { n.html = toWeb(n.html); });
         s.prefs = Object.assign({ privacyOk: s.privacyOk }, lprefs(), { welcomed: true }); // a política já foi aceita no computador
         return s;
@@ -47,7 +47,11 @@
       if (k === 'prefs') { try { localStorage.setItem(LP, JSON.stringify(v)); } catch (e) {} return Promise.resolve(); }
       if (k === 'rules' || k === 'bg' || k === 'update' || k === 'colors') return Promise.resolve(); // ajustes do PC ficam no PC
       if (k === 'notes') v = v.map(function (n) { return Object.assign({}, n, { html: toPc(n.html) }); });
-      return rpc('setState', k, v).then(function (nv) { ver = nv; });
+      return rpc('setState', k, v, since[k] || 0).then(function (r) {
+        ver = r.ver;
+        if (r.merged) listeners.forEach(function (cb) { cb(k); }); // juntou com mudanças do computador: busca o resultado
+        else since[k] = r.now;
+      });
     },
     scan: function () { return rpc('scan'); },
     extraScan: function () { return rpc('extraScan'); },
@@ -63,7 +67,7 @@
     openUrl: function (u) { if (/^https?:\/\//i.test(u)) window.open(u, '_blank', 'noopener'); return Promise.resolve(true); },
     undoCount: ok(0), undoInfo: ok(null), history: ok([]), updateStatus: ok({}), updateState: ok(null), hash: ok({}), nfe: ok([]),
     reveal: ok(), setSpell: noop,
-    onFilesChanged: noop, onBgChanged: noop, onUpdate: noop, onUpdateStatus: noop, onSearchProgress: noop, onOpenCal: noop, onRemoteSet: noop,
+    onFilesChanged: noop, onBgChanged: noop, onUpdate: noop, onUpdateStatus: noop, onSearchProgress: noop, onOpenCal: noop, onRemoteSet: function (cb) { listeners.push(cb); },
   };
   ['pickFolder', 'apply', 'undo', 'pickDir', 'trash', 'undoItems', 'exportRules', 'importRules', 'copyImage', 'exportData', 'openData', 'openLicenses',
     'wipeData', 'installUpdate', 'revealUpdate', 'openUpdateLog', 'checkUpdate', 'extraAdd', 'extraDel', 'favPick', 'pathOf', 'mobileInfo', 'mobileSet', 'mobileNewCode'].forEach(function (k) { api[k] = pcOnly; });
@@ -73,9 +77,8 @@
   setInterval(function () {
     if (document.hidden || !T) return;
     rpc('ver').then(function (v) {
-      var a = document.activeElement, typing = a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) || document.querySelector('dialog[open]');
-      if (ver !== null && v !== ver && !typing) location.reload();
-      if (!typing || ver === null) ver = v;
+      if (ver !== null && v !== ver) listeners.forEach(function (cb) { cb('all'); }); // a tela decide quando aplicar (ver index.html)
+      ver = v;
     }).catch(noop);
-  }, 5000);
+  }, 4000);
 })();

@@ -56,8 +56,18 @@ async function walk(dir, root, out, depth) {
 async function scan(root) { const files = []; await walk(root, root, files, 0); return { root, files }; }
 
 // ---- mover sem nunca sobrescrever ----
-ipcMain.handle('state:get', () => state);
-ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors', 'meta', 'tagdefs', 'notes', 'recur'].includes(k)) { state[k] = v; persist(); if (remote) remote.bump(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
+// quem gravou por último cada parte (computador ou celular) e quando o computador leu cada parte
+const { merge } = require('./merge');
+const deskRead = {}, deskWrite = {}, celWrite = {};
+ipcMain.handle('state:get', () => { const t = Date.now(); for (const k of ['board', 'events', 'recur', 'notes', 'meta', 'tagdefs']) deskRead[k] = t; return state; });
+const SYNCED = new Set(['board', 'events', 'recur', 'notes', 'meta', 'tagdefs']); // o que o celular também mostra
+ipcMain.handle('state:set', (_e, k, v) => { if (['rules', 'board', 'prefs', 'bg', 'update', 'events', 'colors', 'meta', 'tagdefs', 'notes', 'recur'].includes(k)) {
+  // o celular mudou isto depois que o computador leu: junta em vez de apagar o que veio do celular
+  let merged = false;
+  if (SYNCED.has(k) && (celWrite[k] || 0) > (deskRead[k] || 0)) { v = merge(k, state[k], v, deskRead[k] || 0); merged = true; }
+  const changed = JSON.stringify(state[k]) !== JSON.stringify(v); state[k] = v; persist();
+  if (SYNCED.has(k)) { if (changed) deskWrite[k] = Date.now(); if (merged) send('remote-set', k); else deskRead[k] = Date.now(); }
+  if (remote && changed && SYNCED.has(k)) remote.bump(); if (k === 'bg') applyBg(); if (k === 'update') setupUpdater(); } });
 // Após diálogos nativos o Windows pode deixar os campos de texto sem foco; devolve o foco à janela
 const refocus = () => { if (mainWin && !mainWin.isDestroyed()) { mainWin.focus(); mainWin.webContents.focus(); } };
 ipcMain.handle('pick-folder', async () => {
@@ -511,7 +521,13 @@ function getRemote() {
   if (!remote) remote = createRemote({
     handlers, getState: () => state, readable, version: app.getVersion(),
     notesDir: () => path.join(app.getPath('userData'), 'notas'), rendererDir: path.join(__dirname, 'renderer'),
-    setKey: (k, v) => { state[k] = v; persist(); send('remote-set', k); },
+    // o computador mudou isto depois que o celular leu: junta em vez de apagar
+    setKey: (k, v, since) => {
+      let merged = false;
+      if ((deskWrite[k] || 0) > (since || 0)) { v = merge(k, state[k], v, since || 0); merged = true; }
+      if (JSON.stringify(state[k]) === JSON.stringify(v)) return { changed: false, merged };
+      state[k] = v; persist(); celWrite[k] = Date.now(); send('remote-set', k); return { changed: true, merged };
+    },
   });
   return remote;
 }

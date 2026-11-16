@@ -35,8 +35,8 @@ function createRemote({ handlers, getState, setKey, readable, notesDir, renderer
   const notesUrl = () => 'file:///' + notesDir().split(path.sep).join('/').replace(/^\/+/, '') + '/';
   const RPC = {
     ver: () => ver,
-    getState: () => { const s = getState(); return { root: s.root || null, rules: s.rules, board: s.board, events: s.events, recur: s.recur, notes: s.notes, meta: s.meta, tagdefs: s.tagdefs, colors: s.colors, notesUrl: notesUrl(), privacyOk: (s.prefs || {}).privacyOk }; },
-    setState: (k, v) => { if (!SET_KEYS.includes(k)) throw new Error('não permitido'); setKey(k, v); return ++ver; },
+    getState: () => { const s = getState(); return { root: s.root || null, rules: s.rules, board: s.board, events: s.events, recur: s.recur, notes: s.notes, meta: s.meta, tagdefs: s.tagdefs, colors: s.colors, notesUrl: notesUrl(), privacyOk: (s.prefs || {}).privacyOk, now: Date.now() }; },
+    setState: (k, v, since) => { if (!SET_KEYS.includes(k)) throw new Error('não permitido'); const r = setKey(k, v, Number(since) || 0); if (r.changed) ver++; return { ver, merged: r.merged, now: Date.now() }; },
     scan: () => (getState().root ? call('scan', getState().root) : { root: null, files: [] }),
     extraScan: () => call('extra:scan'),
     extraList: () => call('extra:list'),
