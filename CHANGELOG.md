@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.16.1
+- App Android (Prumo-Android-X.Y.Z.apk na página da versão): lê o QR code do computador e abre o Prumo em tela cheia, sem passar pela Play Store. Sem atualização automática: para trocar de versão, desinstale e instale de novo.
+
 ## 0.16.0
 - Prumo no celular: em Configurações > Celular, ligue o acesso e leia o QR code. No mesmo Wi-Fi, o celular vê, busca (inclusive dentro dos arquivos) e abre os arquivos do computador, favorita, e usa Notas, Calendário e Quadro. O que muda de um lado aparece no outro. Organizar, mover e excluir continuam só no computador.
 - Política de privacidade 1.1: explica o acesso pelo celular (desligado por padrão, só na rede de casa, sem internet).

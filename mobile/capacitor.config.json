@@ -1,0 +1,9 @@
+{
+  "appId": "org.prumo.app",
+  "appName": "Prumo",
+  "webDir": "www",
+  "appendUserAgent": "PrumoApp",
+  "backgroundColor": "#0c0c10",
+  "server": { "androidScheme": "https", "cleartext": true, "allowNavigation": ["*"] },
+  "android": { "allowMixedContent": true }
+}

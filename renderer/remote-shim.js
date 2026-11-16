@@ -12,7 +12,7 @@
     var show = function () {
       if (document.getElementById('unpaired')) return;
       var d = document.createElement('div'); d.id = 'unpaired';
-      d.innerHTML = '<div><b>Conecte ao Prumo do computador</b><p>No computador, abra o Prumo em <b>Configurações &gt; Celular</b>, ligue o acesso e leia o QR code com a câmera deste celular.</p><p>Os dois precisam estar no mesmo Wi-Fi.</p></div>';
+      d.innerHTML = '<div><b>Conecte ao Prumo do computador</b><p>No computador, abra o Prumo em <b>Configurações &gt; Celular</b>, ligue o acesso e leia o QR code com a câmera deste celular.</p><p>Os dois precisam estar no mesmo Wi-Fi.</p>' + (/PrumoApp/.test(navigator.userAgent) ? '<p><a class="btn p" href="https://localhost/?scan=1">Ler o QR code</a></p>' : '') + '</div>';
       document.body.appendChild(d);
     };
     document.body ? show() : document.addEventListener('DOMContentLoaded', show);

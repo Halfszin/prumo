@@ -43,3 +43,44 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  android:
+    # app Android simples (abre o Prumo do computador pela rede de casa); assinado com uma chave descartável, sem atualização automática
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: cp node_modules/jsqr/dist/jsQR.js www/
+      - run: npx cap add android
+      - name: Ícone, câmera e versão
+        run: |
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          cp -r res/* android/app/src/main/res/
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />#' android/app/src/main/AndroidManifest.xml
+          grep -q CAMERA android/app/src/main/AndroidManifest.xml
+          V=$(node -p "require('../package.json').version")
+          sed -i "s/versionName \".*\"/versionName \"$V\"/" android/app/build.gradle
+      - run: npx cap sync android
+      - run: ./gradlew assembleRelease --no-daemon
+        working-directory: mobile/android
+      - name: Assinar e publicar
+        run: |
+          V=$(node -p "require('../package.json').version")
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          keytool -genkeypair -keystore k.jks -storepass prumo123 -keypass prumo123 -alias prumo -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Prumo"
+          $BT/zipalign -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk a.apk
+          $BT/apksigner sign --ks k.jks --ks-pass pass:prumo123 --out "Prumo-Android-$V.apk" a.apk
+          $BT/apksigner verify "Prumo-Android-$V.apk"
+          gh release upload "v$V" "Prumo-Android-$V.apk" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
