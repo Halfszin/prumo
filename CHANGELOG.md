@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.18.0
+- Visual novo em blocos (bento): barra lateral e áreas de trabalho como blocos sobre um fundo tingido, Dashboard em mosaico com indicadores coloridos e números grandes, atalhos de pasta coloridos, colunas do Quadro como faixas.
+- Cor de destaque nova (verde-lima, com texto escuro) e fonte Bricolage Grotesque nos títulos e números. Os três temas (Claro, Escuro e Ônix) foram refeitos.
+
 ## 0.17.1
 - Revisão visual de todas as telas: abas dos Arquivos não quebram mais com a pré-visualização aberta, botão ⋯ no fim da linha no modo lista, busca e filtro do Quadro se ajeitam em telas estreitas e no celular.
 - Calendário: texto de ajuda atualizado para o Quadro novo.
