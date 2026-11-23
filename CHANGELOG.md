@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.16.3
+- Quadro: hora do aviso no cartão. Com data e hora marcadas, o Windows avisa na hora certa (cartões já concluídos não avisam); clicar no aviso abre o cartão.
+
 ## 0.16.2
 - Celular: parou de piscar. As mudanças do computador aparecem sem recarregar a página e esperam você terminar de digitar.
 - Celular e computador juntam as mudanças feitas ao mesmo tempo (notas, cartões e lembretes) em vez de uma apagar a outra.

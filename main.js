@@ -305,6 +305,21 @@ function checkReminders() {
     n.on('click', () => { showWindow(); send('open-cal', k); });
     n.show();
   }
+  // cartões do Quadro com data e hora (os já concluídos não avisam)
+  const board = Array.isArray(state.board) ? state.board : [];
+  const doneCol = board.find((c) => /conclu|feito|pronto|finaliz|done/i.test(c.t || '')) || board[board.length - 1];
+  for (const col of board) {
+    if (col === doneCol) continue;
+    for (const c of col.c || []) {
+      if (c.d !== k || !c.tm || c.tm > hm) continue;
+      const key = k + '|card:' + c.id + ':' + c.tm; // mudar a hora avisa de novo
+      if (sent[key]) continue;
+      sent[key] = 1; ch = true;
+      const n = new Notification({ title: 'Tarefa do Quadro', body: `${c.tm} · ${c.t}` });
+      n.on('click', () => { showWindow(); send('open-card', c.id); });
+      n.show();
+    }
+  }
   if (ch) { const old = dkey(new Date(Date.now() - 3 * 864e5)); for (const x of Object.keys(sent)) if (x.slice(0, 10) < old) delete sent[x]; state.notified = sent; persist(); }
 }
 

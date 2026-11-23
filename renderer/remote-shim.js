@@ -67,7 +67,7 @@
     openUrl: function (u) { if (/^https?:\/\//i.test(u)) window.open(u, '_blank', 'noopener'); return Promise.resolve(true); },
     undoCount: ok(0), undoInfo: ok(null), history: ok([]), updateStatus: ok({}), updateState: ok(null), hash: ok({}), nfe: ok([]),
     reveal: ok(), setSpell: noop,
-    onFilesChanged: noop, onBgChanged: noop, onUpdate: noop, onUpdateStatus: noop, onSearchProgress: noop, onOpenCal: noop, onRemoteSet: function (cb) { listeners.push(cb); },
+    onFilesChanged: noop, onBgChanged: noop, onUpdate: noop, onUpdateStatus: noop, onSearchProgress: noop, onOpenCal: noop, onOpenCard: noop, onRemoteSet: function (cb) { listeners.push(cb); },
   };
   ['pickFolder', 'apply', 'undo', 'pickDir', 'trash', 'undoItems', 'exportRules', 'importRules', 'copyImage', 'exportData', 'openData', 'openLicenses',
     'wipeData', 'installUpdate', 'revealUpdate', 'openUpdateLog', 'checkUpdate', 'extraAdd', 'extraDel', 'favPick', 'pathOf', 'mobileInfo', 'mobileSet', 'mobileNewCode'].forEach(function (k) { api[k] = pcOnly; });
