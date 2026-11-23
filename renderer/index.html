@@ -435,9 +435,6 @@ dialog[open]::backdrop{animation:fade .3s ease-out}
 .lg i{width:8px;height:8px;border-radius:50%;flex:none}
 .app.slim .lg{display:none}
 .card{cursor:default}
-.grip{border:0;background:none;color:var(--dim);cursor:grab;padding:3px 2px;border-radius:6px;display:grid;place-items:center;flex:none;opacity:.5}
-.grip:hover,.grip:focus-visible{opacity:1;background:var(--line)}
-.grip:active{cursor:grabbing}
 .col.dragging{opacity:.45}
 .card.over-t{box-shadow:0 -5px 0 0 var(--accent)}
 .card.over-b{box-shadow:0 5px 0 0 var(--accent)}
@@ -961,6 +958,10 @@ html.remote .kacts{opacity:1}
 /* superfícies do navegador no tom do app */
 ::selection{background:color-mix(in srgb,var(--accent) 35%,transparent)}
 input,textarea,[contenteditable]{caret-color:var(--accent-text)}
+.tabs button{white-space:nowrap}
+.tabs{overflow-x:auto;scrollbar-width:none;min-width:0;max-width:100%}.tabs::-webkit-scrollbar{display:none}.toolbar>*{min-width:0}
+.grid.list .file .more{position:static;order:9;opacity:1;margin-left:2px;flex:none}
+@media(max-width:760px){.btools{flex-wrap:wrap;width:100%}.btools .bsearch{flex:1 1 100%}.bsel{flex:1 1 auto}}
 </style>
 </head>
 <body>
@@ -1430,7 +1431,6 @@ $('cal-files').onclick=e=>{const b=e.target.closest('[data-open]');if(b){view='a
 
 // quadro (kanban)
 let board=[{id:'a',t:'A fazer',c:[{id:1,t:'Revisar notas fiscais de setembro'},{id:2,t:'Enviar proposta para a Acme'}]},{id:'b',t:'Fazendo',c:[{id:3,t:'Renomear fotos das férias'}]},{id:'c',t:'Feito',c:[{id:4,t:'Criar pastas base'}]}],uid=10,drag=null;
-const GRIP=(t,id)=>`<button class="grip" draggable="true" data-grip="${t}" data-gid="${id}" aria-label="${t==='col'?'Mover coluna':'Mover cartão'} (arraste ou use as setas)" title="Arraste para mover"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg></button>`;
 const PRI={baixa:'Baixa',media:'Média',alta:'Alta'};
 const fmtDT=t=>{if(!t)return'';const r=fmtRel(t);if(/^(Hoje|Ontem)/.test(r))return r;const d=new Date(t);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
 const kid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6); // ids únicos mesmo depois de reabrir o Prumo
@@ -1535,7 +1535,7 @@ $('r-rows').onclick=async e=>{const i=e.target.dataset.del;if(i!==undefined&&awa
 $('r-add').onclick=()=>{rules.push({folder:'Nova pasta',kw:'',ext:''});renderRules();sv()};
 $('r-reset').onclick=async()=>{if(await askC('Restaurar as regras padrão?','Suas regras atuais serão substituídas.','Restaurar')){setRules(JSON.parse(JSON.stringify(DEFAULT_RULES)));save('rules',rules);renderRules()}};
 function showSec(k){document.querySelectorAll('.s-side [data-sec]').forEach(b=>b.setAttribute('aria-current',b.dataset.sec===k));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==k);$('settings').querySelector('.s-main').scrollTop=0;
-  if(k==='rules')renderRules();if(['look','dates','auto','priv'].includes(k))syncSettings();if(k==='priv')aboutInfo();if(k==='auto')renderAuto();if(k==='side')renderSide();if(k==='space')render();if(k==='hist')renderHist();if(k==='about')aboutInfo();if(k==='phone')api.mobileInfo().then(phoneUI)}
+  if(k==='rules')renderRules();if(['look','dates','auto','priv'].includes(k))syncSettings();if(k==='priv')aboutInfo();if(k==='auto')renderAuto();if(k==='side')renderSide();if(k==='space')render();if(k==='hist')renderHist();if(k==='about')aboutInfo();if(k==='phone'){if(window.api&&api.mobileInfo)api.mobileInfo().then(phoneUI);else{$('ph-on').disabled=true;$('ph-err').hidden=false;$('ph-err').textContent='O acesso pelo celular funciona no programa instalado.'}}}
 function phoneUI(i){if(!i)return;$('ph-on').setAttribute('aria-checked',!!i.on);$('ph-box').hidden=!i.on||!i.url;$('ph-qr').innerHTML=i.qr||'';$('ph-url').textContent=i.url||'';
   const er=i.error||(i.on&&!i.url?'O computador não está conectado a nenhuma rede. Conecte ao Wi-Fi e tente de novo.':'');$('ph-err').hidden=!er;$('ph-err').textContent=er}
 function openSet(k){$('settings').hidden=false;document.body.classList.add('in-set');showSec(typeof k==='string'?k:'rules')}
@@ -1821,7 +1821,7 @@ const cardsOn=k=>board.flatMap(c=>c.c.map(x=>({...x,col:c.t}))).filter(x=>x.d===
 const pendingN=()=>Object.values(events).flat().filter(e=>!e.done).length+dayEv(dkey(new Date())).filter(e=>e.rec&&!e.done).length;
 const cellItems=(k,ev)=>{const it=[...ev.map(e=>`<span class="ce${e.done?' done':''}">${e.time?`<b>${e.time}</b> `:''}${e.rec?'↻ ':''}${esc(e.t)}</span>`),...cardsOn(k).map(x=>`<span class="ce kce" style="--kc:${x.c||'var(--accent)'}">${esc(x.t)}</span>`)];return it.slice(0,3).join('')+(it.length>3?`<span class="cmore">+${it.length-3}</span>`:'')};
 function calExtra(){const kc=cardsOn(calSel);$('cal-kn').textContent=kc.length||'';
-  $('cal-cards').innerHTML=kc.length?kc.map(x=>`<button class="bf" data-kgo="${x.id}"><i class="kdot" style="background:${x.c||'var(--accent)'}"></i><span class="bn">${esc(x.t)}</span><span class="v">${esc(x.col)}</span></button>`).join(''):'<p class="hint" style="margin:0">Nenhum cartão com esta data. No Quadro, use ⋯ no cartão para dar data e cor.</p>';
+  $('cal-cards').innerHTML=kc.length?kc.map(x=>`<button class="bf" data-kgo="${x.id}"><i class="kdot" style="background:${x.c||'var(--accent)'}"></i><span class="bn">${esc(x.t)}</span><span class="v">${esc(x.col)}</span></button>`).join(''):'<p class="hint" style="margin:0">Nenhum cartão com esta data. No Quadro, abra o cartão (clique nele) para dar data e cor.</p>';
   const d=dayDate(calSel),v=$('cal-rep').value||'';
   $('cal-rep').innerHTML=[['','Não repete'],['daily','Todo dia'],['weekly','Toda '+DSEML[d.getDay()]],['monthly','Todo mês, dia '+d.getDate()],['yearly','Todo ano, '+d.getDate()+' de '+MESL[d.getMonth()]]].map(([k,l])=>`<option value="${k}">${l}</option>`).join('');$('cal-rep').value=v}
 $('cal-cards').onclick=e=>{const b=e.target.closest('[data-kgo]');if(!b)return;setPage('board');const c=B.querySelector(`[data-card="${b.dataset.kgo}"]`);if(c){c.scrollIntoView({block:'nearest',inline:'center'});c.classList.add('flash')}};

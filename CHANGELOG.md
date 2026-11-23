@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.17.1
+- Revisão visual de todas as telas: abas dos Arquivos não quebram mais com a pré-visualização aberta, botão ⋯ no fim da linha no modo lista, busca e filtro do Quadro se ajeitam em telas estreitas e no celular.
+- Calendário: texto de ajuda atualizado para o Quadro novo.
+- Prévia web: Configurações > Celular não dá mais erro.
+
 ## 0.17.0
 - Quadro com visual novo: cartões compactos (prioridade com bandeira, barra da checklist, data, cronômetro), colunas com ponto de cor e contador, e resumo no topo (abertos, vencendo em 7 dias, atrasados, concluídos na semana).
 - Quadro: arraste o cartão por qualquer lugar (ou a coluna pelo topo), sem alça. Clique no cartão para abrir; clique duas vezes no nome da coluna para renomear. Pelo teclado: Tab e setas.
