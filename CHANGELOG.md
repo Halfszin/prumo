@@ -1,5 +1,11 @@
 # Histórico de versões
 
+## 0.17.0
+- Quadro com visual novo: cartões compactos (prioridade com bandeira, barra da checklist, data, cronômetro), colunas com ponto de cor e contador, e resumo no topo (abertos, vencendo em 7 dias, atrasados, concluídos na semana).
+- Quadro: arraste o cartão por qualquer lugar (ou a coluna pelo topo), sem alça. Clique no cartão para abrir; clique duas vezes no nome da coluna para renomear. Pelo teclado: Tab e setas.
+- Quadro: filtro por prioridade.
+- Notas: escolha entre cartões detalhados ou só o título.
+
 ## 0.16.4
 - Logo novo em vetor: ícone do Windows, bandeja, barra lateral, pacote da Loja e app Android desenhados direto do vetor em cada tamanho, sem serrilhado.
 
