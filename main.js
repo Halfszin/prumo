@@ -338,8 +338,8 @@ const watcher = createWatcher({
 });
 function showWindow() { if (!mainWin || mainWin.isDestroyed()) createWindow(); else { if (mainWin.isMinimized()) mainWin.restore(); mainWin.show(); mainWin.focus(); } }
 function makeTray() {
-  const img = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png'));
-  tray = new Tray(img.isEmpty() ? nativeImage.createEmpty() : img.resize({ width: 16, height: 16 }));
+  const img = nativeImage.createFromPath(path.join(__dirname, 'build', 'tray.png')); // tray@2x.png entra sozinho em telas de alta resolução
+  tray = new Tray(img.isEmpty() ? nativeImage.createEmpty() : img);
   tray.setToolTip('Prumo');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Abrir o Prumo', click: showWindow },

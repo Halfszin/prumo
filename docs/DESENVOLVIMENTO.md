@@ -60,3 +60,7 @@ Na versão da Loja o Prumo não procura atualizações sozinho: quem atualiza é
 ## Ainda não testado em Windows real
 
 Corretor ortográfico, instalação silenciosa de ponta a ponta, notificações dos lembretes e organização automática em pastas grandes.
+
+## Ícones
+
+O desenho do logo fica em `build/logo.svg`. Depois de mudar o desenho, rode `node scripts/icones.js` para gerar de novo todos os ícones (Windows, bandeja, Loja e Android), cada tamanho desenhado direto do vetor.

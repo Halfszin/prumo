@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.16.4
+- Logo novo em vetor: ícone do Windows, bandeja, barra lateral, pacote da Loja e app Android desenhados direto do vetor em cada tamanho, sem serrilhado.
+
 ## 0.16.3
 - Quadro: hora do aviso no cartão. Com data e hora marcadas, o Windows avisa na hora certa (cartões já concluídos não avisam); clicar no aviso abre o cartão.
 

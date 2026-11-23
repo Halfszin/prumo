@@ -1,7 +1,7 @@
 {
   "name": "prumo-celular",
   "private": true,
-  "version": "0.16.3",
+  "version": "0.16.4",
   "description": "App Android do Prumo: abre o Prumo do computador pela rede de casa.",
   "license": "MIT",
   "dependencies": {
