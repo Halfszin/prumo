@@ -1,40 +1,28 @@
 # Design
 
-O Prumo usa um visual **bento**: a interface é um mosaico de blocos de cantos generosos sobre um fundo levemente tingido. Cada área de trabalho (barra lateral, indicadores, painéis, colunas, cartões, seções das Configurações) é um bloco; os espaços entre eles são sempre iguais.
+O Prumo segue o **moderno padrão** dos apps de produtividade: barra lateral, blocos discretos com borda fina, tipografia Inter, uma cor de destaque e muito acabamento. Familiar de propósito: o app fica aberto o dia todo e precisa sumir na tarefa.
 
-## Temas e cores
+## Temas
 
-Os tokens ficam no bloco "Visual bento" de `renderer/index.html`. Três temas: Claro (`light`), Escuro (`escuro`) e Ônix (padrão `:root`), mais o automático que segue o Windows.
+Três temas prontos, definidos por tokens no começo de `renderer/index.html`: **Claro** (`light`), **Escuro** (`escuro`) e **Ônix** (padrão `:root`), mais o automático que segue o Windows. Nos temas, o usuário só troca a **cor de destaque** (Configurações > Temas).
 
 | Token | Uso |
 |---|---|
-| `--bg` | fundo onde os blocos ficam |
-| `--card` / `--side` | blocos de conteúdo e barra lateral |
+| `--bg` / `--card` / `--side` | fundo, blocos e barra lateral |
 | `--ink` / `--dim` / `--line` | texto, texto secundário, divisórias |
-| `--accent` (#ED254E, vermelho-rosado) e `--accent-btn` (#D91A43, para fundos com texto branco, 5:1) | ação principal, item atual da navegação, seleção, interruptores ligados; o texto por cima usa `--accent-ink` (escuro) |
-| `--accent-text` | links e destaques em texto (vermelho mais escuro no Claro, mais claro nos escuros) |
-| `--t1`…`--t6` | cores dos blocos (lima, céu, pêssego, lilás, menta, rosa), (rosado, petróleo, pêssego, lilás, menta, areia) suaves no Claro e profundas nos escuros |
+| `--accent` | botão principal, item atual, seleção, interruptores |
+| `--accent-ink` | texto sobre o destaque |
+| `--accent-text` | links e destaques em texto |
+| `--soft` | fundo suave do item selecionado |
 | `--danger` / `--ok` / `--warn` | estados |
 
-O texto sobre o destaque é branco; para texto vermelho sobre fundo claro usa-se `--accent-text` (#c41a3f). O tema Escuro é todo em petróleo (#002A32), que também é a cor do texto no Claro.
+## Cor de destaque
 
-## Tipografia
+Padrão violeta `#7c3aed`. Cores prontas: violeta, azul, petróleo, verde, laranja, vermelho, rosa e grafite, mais uma cor livre. `applyAccent()` recalcula a cada troca de tema:
 
-- Títulos, números grandes e nomes de cartões e colunas: **Bricolage Grotesque** (`--fd`, embutida).
-- Texto da interface: **Inter**.
-- Nome "Prumo": **Pacifico** (compromisso de marca).
+- texto sobre o destaque branco ou escuro, o que passar de 4,5:1; se nenhum passar, o destaque escurece um pouco até o branco passar;
+- `--accent-text` escurece (Claro) ou clareia (escuros) até 4,5:1 sobre `--card`.
 
-## Forma
+## Tipografia e forma
 
-- Raio dos blocos: `--r` (20 px); cartões do Quadro 16 px; botões e campos 12 px; diálogos 24 px.
-- Espaço entre blocos: `--gap` (12 px).
-- No Claro os blocos são brancos sem borda; nos temas escuros levam uma borda fina (`--line`).
-- Sem vidro/desfoque e sem sombras decorativas.
-
-## Assinatura
-
-O Dashboard é um bento de 12 colunas: quatro indicadores coloridos (`--t1`…`--t4`) com números grandes, seguidos de painéis de larguras 7/5 e 6/6. Os atalhos de pasta em Arquivos repetem as cores dos blocos. No Quadro, as colunas são faixas tingidas (nunca blocos dentro de blocos) e os cartões são os blocos.
-
-## Ícones
-
-Logo em vetor (`build/logo.svg`); ícones gerados por `node scripts/icones.js`. Ícones da interface em traço de 2 px.
+Inter em toda a interface; "Prumo" em Pacifico. Blocos com raio de 12 px e borda `--line`; sem vidro, sem sombras decorativas. Ícones em traço de 2 px; logo em `build/logo.svg`.

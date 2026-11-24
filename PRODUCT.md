@@ -30,8 +30,8 @@ Organizador de arquivos local e de código aberto que nunca move nada sem mostra
 - Nome "Prumo" escrito na fonte manuscrita Pacifico.
 - Logo: o símbolo do fio de prumo em vetor (`build/logo.svg`).
 - Três temas obrigatórios: Claro, Escuro e Ônix, mais o automático que segue o Windows.
-- A cor roxa não é obrigatória.
-- O visual deve ser dinâmico, criativo, atraente e único, alinhado ao design digital atual; sem glassmorphism.
+- Visual: moderno padrão (o usuário testou um visual em blocos e preferiu o padrão); sem glassmorphism.
+- Temas prontos em que o usuário edita só a cor de destaque (padrão violeta).
 
 ## Evidence on Hand
 Dados de exemplo da prévia (21 arquivos fictícios, quadro e notas de demonstração) e o guia "Guia do Prumo" dentro das Notas. Não há depoimentos, números de usuários ou imprensa.

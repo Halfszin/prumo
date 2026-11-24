@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.19.0
+- Volta ao visual moderno padrão (o de antes dos blocos), com Inter e destaque violeta.
+- Nova aba Configurações > Temas: temas prontos (Claro, Escuro, Ônix ou automático), botão da lua e cor de destaque à escolha (8 cores prontas ou qualquer outra). O texto sobre o destaque se ajusta sozinho para continuar legível em cada tema.
+
 ## 0.18.1
 - Cores novas para teste: destaque #ED254E (vermelho-rosado) e petróleo #002A32 (texto do tema Claro e base do tema Escuro). Botões com texto usam #D91A43, quase igual, para o texto branco ficar legível.
 - Barra lateral recolhida: ícones centralizados; item atual e hover só no quadradinho do ícone, sem cortes.
