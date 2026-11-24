@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 0.18.1
+- Cores novas para teste: destaque #ED254E (vermelho-rosado) e petróleo #002A32 (texto do tema Claro e base do tema Escuro). Botões com texto usam #D91A43, quase igual, para o texto branco ficar legível.
+- Barra lateral recolhida: ícones centralizados; item atual e hover só no quadradinho do ícone, sem cortes.
+
 ## 0.18.0
 - Visual novo em blocos (bento): barra lateral e áreas de trabalho como blocos sobre um fundo tingido, Dashboard em mosaico com indicadores coloridos e números grandes, atalhos de pasta coloridos, colunas do Quadro como faixas.
 - Cor de destaque nova (verde-lima, com texto escuro) e fonte Bricolage Grotesque nos títulos e números. Os três temas (Claro, Escuro e Ônix) foram refeitos.

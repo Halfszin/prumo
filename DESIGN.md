@@ -11,12 +11,12 @@ Os tokens ficam no bloco "Visual bento" de `renderer/index.html`. Três temas: C
 | `--bg` | fundo onde os blocos ficam |
 | `--card` / `--side` | blocos de conteúdo e barra lateral |
 | `--ink` / `--dim` / `--line` | texto, texto secundário, divisórias |
-| `--accent` (#c4f25a, verde-lima) | ação principal, item atual da navegação, seleção, interruptores ligados; o texto por cima usa `--accent-ink` (escuro) |
-| `--accent-text` | links e destaques em texto (verde-escuro no Claro, lima nos escuros) |
-| `--t1`…`--t6` | cores dos blocos (lima, céu, pêssego, lilás, menta, rosa), suaves no Claro e profundas nos escuros |
+| `--accent` (#ED254E, vermelho-rosado) e `--accent-btn` (#D91A43, para fundos com texto branco, 5:1) | ação principal, item atual da navegação, seleção, interruptores ligados; o texto por cima usa `--accent-ink` (escuro) |
+| `--accent-text` | links e destaques em texto (vermelho mais escuro no Claro, mais claro nos escuros) |
+| `--t1`…`--t6` | cores dos blocos (lima, céu, pêssego, lilás, menta, rosa), (rosado, petróleo, pêssego, lilás, menta, areia) suaves no Claro e profundas nos escuros |
 | `--danger` / `--ok` / `--warn` | estados |
 
-O verde-lima nunca é usado como cor de texto sobre fundo claro.
+O texto sobre o destaque é branco; para texto vermelho sobre fundo claro usa-se `--accent-text` (#c41a3f). O tema Escuro é todo em petróleo (#002A32), que também é a cor do texto no Claro.
 
 ## Tipografia
 
